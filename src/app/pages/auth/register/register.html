@@ -1,0 +1,66 @@
+<p-card>
+  <div class="text-center mb-6">
+    <h2 class="text-3xl font-bold text-gray-900 mb-2">Criar conta</h2>
+    <p class="text-gray-600">Preencha os dados abaixo</p>
+  </div>
+
+  <form class="space-y-4">
+    <div>
+      <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Nome completo</label>
+      <input
+        type="text"
+        id="name"
+        pInputText
+        class="w-full"
+        placeholder="Seu nome"
+      />
+    </div>
+
+    <div>
+      <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+      <input
+        type="email"
+        id="email"
+        pInputText
+        class="w-full"
+        placeholder="seu@email.com"
+      />
+    </div>
+
+    <div>
+      <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+      <p-password
+        id="password"
+        styleClass="w-full"
+        [inputStyle]="{'width': '100%'}"
+        placeholder="Digite sua senha"
+      />
+    </div>
+
+    <div>
+      <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">Confirmar senha</label>
+      <p-password
+        id="confirmPassword"
+        styleClass="w-full"
+        [inputStyle]="{'width': '100%'}"
+        [feedback]="false"
+        placeholder="Confirme sua senha"
+      />
+    </div>
+
+    <p-button
+      label="Cadastrar"
+      styleClass="w-full"
+      [raised]="true"
+    />
+  </form>
+
+  <div class="mt-6 text-center">
+    <p class="text-sm text-gray-600">
+      Já tem uma conta?
+      <a routerLink="/auth/login" class="text-indigo-600 hover:text-indigo-500 font-medium">
+        Entre
+      </a>
+    </p>
+  </div>
+</p-card>

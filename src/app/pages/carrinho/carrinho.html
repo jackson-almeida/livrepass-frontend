@@ -1,0 +1,78 @@
+<div class="space-y-6">
+  <h1 class="text-3xl font-bold text-gray-900">Meu Carrinho</h1>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Lista de itens -->
+    <div class="lg:col-span-2 space-y-4">
+      <!-- Item do carrinho -->
+      <p-card>
+        <div class="flex items-center gap-4">
+          <img
+            alt="Evento"
+            src="https://placehold.co/150x100/indigo/white?text=Evento"
+            class="w-24 h-16 object-cover rounded"
+          />
+          <div class="flex-1">
+            <h3 class="text-lg font-semibold">Show de Rock</h3>
+            <p class="text-gray-600">15 de Dezembro, 2025</p>
+          </div>
+          <div class="text-right">
+            <p class="text-xl font-bold text-indigo-600">R$ 150,00</p>
+            <button class="text-red-600 hover:text-red-700 text-sm mt-2">
+              <i class="pi pi-trash"></i> Remover
+            </button>
+          </div>
+        </div>
+      </p-card>
+
+      <p-card>
+        <div class="flex items-center gap-4">
+          <img
+            alt="Evento"
+            src="https://placehold.co/150x100/purple/white?text=Evento"
+            class="w-24 h-16 object-cover rounded"
+          />
+          <div class="flex-1">
+            <h3 class="text-lg font-semibold">Festival de Música</h3>
+            <p class="text-gray-600">20 de Dezembro, 2025</p>
+          </div>
+          <div class="text-right">
+            <p class="text-xl font-bold text-indigo-600">R$ 250,00</p>
+            <button class="text-red-600 hover:text-red-700 text-sm mt-2">
+              <i class="pi pi-trash"></i> Remover
+            </button>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Resumo -->
+    <div class="lg:col-span-1">
+      <p-card>
+        <h3 class="text-xl font-semibold mb-4">Resumo do Pedido</h3>
+
+        <div class="space-y-3 mb-6">
+          <div class="flex justify-between">
+            <span class="text-gray-600">Subtotal</span>
+            <span class="font-medium">R$ 400,00</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">Taxa de serviço</span>
+            <span class="font-medium">R$ 20,00</span>
+          </div>
+          <div class="border-t pt-3 flex justify-between">
+            <span class="text-lg font-semibold">Total</span>
+            <span class="text-xl font-bold text-indigo-600">R$ 420,00</span>
+          </div>
+        </div>
+
+        <p-button
+          label="Finalizar Compra"
+          icon="pi pi-check"
+          styleClass="w-full"
+          [raised]="true"
+        />
+      </p-card>
+    </div>
+  </div>
+</div>
