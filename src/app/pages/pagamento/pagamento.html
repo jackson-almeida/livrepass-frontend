@@ -10,7 +10,7 @@
   </div>
 
   <!-- Seleção de forma de pagamento -->
-  @if (!selectedMethod) {
+  @if (showSelection) {
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Cartão -->
       <p-card class="cursor-pointer hover:shadow-lg transition-shadow">
