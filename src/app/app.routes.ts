@@ -33,6 +33,20 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/carrinho/carrinho').then(m => m.CarrinhoComponent)
       },
       {
+        path: 'pagamento',
+        loadComponent: () => import('./pages/pagamento/pagamento').then(m => m.PagamentoComponent),
+        children: [
+          {
+            path: 'card',
+            loadComponent: () => import('./pages/pagamento/pagamento-cartao/pagamento-cartao').then(m => m.PagamentoCartaoComponent)
+          },
+          {
+            path: 'pix',
+            loadComponent: () => import('./pages/pagamento/pagamento-pix/pagamento-pix').then(m => m.PagamentoPixComponent)
+          }
+        ]
+      },
+      {
         path: '',
         redirectTo: 'ingressos',
         pathMatch: 'full'

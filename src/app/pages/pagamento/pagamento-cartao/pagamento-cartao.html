@@ -1,0 +1,133 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between mb-6">
+    <button 
+      (click)="voltarParaSelecao()"
+      class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 flex items-center gap-2"
+    >
+      <i class="pi pi-arrow-left"></i>
+      Voltar
+    </button>
+    <div class="flex items-center gap-2 text-primary-600 dark:text-primary-400">
+      <i class="pi pi-credit-card text-2xl"></i>
+      <span class="font-semibold">Cartão de Crédito/Débito</span>
+    </div>
+  </div>
+
+  <p-card>
+    <form class="space-y-6">
+      <!-- Número do Cartão -->
+      <div>
+        <label for="cardNumber" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Número do Cartão
+        </label>
+        <p-inputMask
+          id="cardNumber"
+          mask="9999 9999 9999 9999"
+          placeholder="1234 5678 9012 3456"
+          styleClass="w-full"
+          [style]="{'width': '100%'}"
+        />
+      </div>
+
+      <!-- Nome no Cartão -->
+      <div>
+        <label for="cardName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Nome no Cartão
+        </label>
+        <input
+          type="text"
+          id="cardName"
+          pInputText
+          class="w-full"
+          placeholder="NOME COMPLETO"
+          style="text-transform: uppercase"
+        />
+      </div>
+
+      <!-- Validade e CVV -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label for="cardMonth" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Mês
+          </label>
+          <p-select
+            id="cardMonth"
+            [options]="meses"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Mês"
+            styleClass="w-full"
+            [style]="{'width': '100%'}"
+          />
+        </div>
+
+        <div>
+          <label for="cardYear" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Ano
+          </label>
+          <p-select
+            id="cardYear"
+            [options]="anos"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Ano"
+            styleClass="w-full"
+            [style]="{'width': '100%'}"
+          />
+        </div>
+
+        <div>
+          <label for="cardCvv" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            CVV
+          </label>
+          <p-inputMask
+            id="cardCvv"
+            mask="999"
+            placeholder="123"
+            styleClass="w-full"
+            [style]="{'width': '100%'}"
+          />
+        </div>
+      </div>
+
+      <!-- CPF do Titular -->
+      <div>
+        <label for="cpf" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          CPF do Titular
+        </label>
+        <p-inputMask
+          id="cpf"
+          mask="999.999.999-99"
+          placeholder="000.000.000-00"
+          styleClass="w-full"
+          [style]="{'width': '100%'}"
+        />
+      </div>
+
+      <!-- Resumo do Valor -->
+      <div class="bg-gray-50 dark:bg-dark-surface p-4 rounded-lg border dark:border-dark-border">
+        <div class="flex justify-between items-center">
+          <span class="text-lg font-semibold text-gray-700 dark:text-gray-300">Total a pagar:</span>
+          <span class="text-2xl font-bold text-primary-600 dark:text-primary-400">R$ 420,00</span>
+        </div>
+      </div>
+
+      <!-- Botões -->
+      <div class="flex gap-4">
+        <p-button
+          label="Cancelar"
+          severity="secondary"
+          styleClass="flex-1"
+          (click)="voltarParaSelecao()"
+        />
+        <p-button
+          label="Finalizar Pagamento"
+          icon="pi pi-check"
+          styleClass="flex-1"
+          [raised]="true"
+          (click)="finalizarPagamento()"
+        />
+      </div>
+    </form>
+  </p-card>
+</div>

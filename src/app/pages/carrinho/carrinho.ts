@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 
@@ -8,4 +9,10 @@ import { ButtonModule } from 'primeng/button';
   templateUrl: './carrinho.html',
   styleUrl: './carrinho.scss'
 })
-export class CarrinhoComponent {}
+export class CarrinhoComponent {
+  private router = inject(Router);
+
+  finalizarCompra() {
+    this.router.navigate(['/pagamento']);
+  }
+}
