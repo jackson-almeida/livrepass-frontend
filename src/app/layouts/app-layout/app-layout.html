@@ -1,19 +1,39 @@
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen bg-gray-50 dark:bg-dark-bg transition-colors duration-300">
   <!-- Navbar -->
-  <nav class="bg-white shadow-sm">
+  <nav class="bg-white dark:bg-dark-surface shadow-sm border-b dark:border-dark-border transition-colors duration-300">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between h-16">
         <div class="flex items-center">
-          <h1 class="text-2xl font-bold text-indigo-600">PassLivre</h1>
+          <h1 class="text-2xl font-bold text-primary-600 dark:text-primary-400">PassLivre</h1>
         </div>
         <div class="flex items-center space-x-4">
-          <a routerLink="/ingressos" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+          <a
+            routerLink="/ingressos"
+            class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+          >
             Ingressos
           </a>
-          <a routerLink="/carrinho" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+          <a
+            routerLink="/carrinho"
+            class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+          >
             Carrinho
           </a>
-          <button class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+
+          <!-- Theme Toggle Button -->
+          <button
+            (click)="toggleTheme()"
+            class="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors"
+            [attr.aria-label]="themeService.isDarkMode() ? 'Ativar tema claro' : 'Ativar tema escuro'"
+          >
+            @if (themeService.isDarkMode()) {
+              <i class="pi pi-sun text-xl"></i>
+            } @else {
+              <i class="pi pi-moon text-xl"></i>
+            }
+          </button>
+
+          <button class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
             Sair
           </button>
         </div>
