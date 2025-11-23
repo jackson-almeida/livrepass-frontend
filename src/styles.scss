@@ -5,3 +5,103 @@
 @tailwind utilities;
 
 @import "primeicons/primeicons.css";
+
+/* Forçar fundo branco e texto escuro nos cards e forms no modo escuro */
+.dark {
+  /* Cards do PrimeNG */
+  p-card .p-card {
+    background: white !important;
+    color: #1a1a1a !important;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  p-card .p-card .p-card-title,
+  p-card .p-card .p-card-subtitle,
+  p-card .p-card .p-card-content {
+    color: #1a1a1a !important;
+  }
+
+  /* Forçar textos dentro dos cards sempre escuros */
+  p-card h2,
+  p-card h3,
+  p-card h4,
+  p-card p,
+  p-card span,
+  p-card label,
+  p-card div {
+    color: #1a1a1a !important;
+  }
+
+  /* Exceção para textos de links e botões secundários */
+  p-card a {
+    color: #8b5cf6 !important;
+  }
+
+  p-card a:hover {
+    color: #7c3aed !important;
+  }
+
+  /* Inputs do PrimeNG */
+  .p-inputtext,
+  .p-inputmask,
+  .p-select,
+  .p-select .p-select-label,
+  .p-password input,
+  .p-calendar input {
+    background: white !important;
+    color: #1a1a1a !important;
+    border-color: #d1d5db !important;
+  }
+
+  .p-inputtext::placeholder,
+  .p-inputmask::placeholder,
+  .p-password input::placeholder {
+    color: #9ca3af !important;
+  }
+
+  .p-inputtext:enabled:focus,
+  .p-inputmask:enabled:focus,
+  .p-password input:enabled:focus {
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 0 0 1px #8b5cf6 !important;
+  }
+
+  /* Select dropdown */
+  .p-select:not(.p-disabled):hover,
+  .p-select:not(.p-disabled).p-focus {
+    border-color: #8b5cf6 !important;
+  }
+
+  .p-select-overlay {
+    background: white !important;
+    color: #1a1a1a !important;
+  }
+
+  .p-select-option {
+    color: #1a1a1a !important;
+  }
+
+  .p-select-option:hover {
+    background: #f3f4f6 !important;
+  }
+
+  .p-select-option.p-focus {
+    background: #ede9fe !important;
+  }
+
+  /* Labels e textos de formulário */
+  label {
+    color: #374151 !important;
+  }
+
+  /* Password strength meter */
+  .p-password-overlay {
+    background: white !important;
+    color: #1a1a1a !important;
+  }
+
+  /* Ícones dentro dos cards */
+  p-card .pi {
+    color: #8b5cf6 !important;
+  }
+}
