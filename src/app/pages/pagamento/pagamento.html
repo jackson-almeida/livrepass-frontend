@@ -1,6 +1,6 @@
 <div class="space-y-6 max-w-4xl mx-auto">
   <div class="flex items-center gap-4 mb-8">
-    <button 
+    <button
       (click)="router.navigate(['/carrinho'])"
       class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
     >
@@ -14,7 +14,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Cartão -->
       <p-card class="cursor-pointer hover:shadow-lg transition-shadow">
-        <div 
+        <div
           (click)="selectPaymentMethod('card')"
           class="text-center space-y-4 p-6"
         >
@@ -28,7 +28,7 @@
 
       <!-- PIX -->
       <p-card class="cursor-pointer hover:shadow-lg transition-shadow">
-        <div 
+        <div
           (click)="selectPaymentMethod('pix')"
           class="text-center space-y-4 p-6"
         >

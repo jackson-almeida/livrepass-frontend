@@ -17,7 +17,7 @@ export class PagamentoComponent implements OnInit {
   ngOnInit() {
     // Verifica a URL atual
     this.checkRoute();
-    
+
     // Escuta mudanças de rota
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
