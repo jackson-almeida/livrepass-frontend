@@ -4,27 +4,45 @@
     <p class="text-gray-600">Entre com sua conta</p>
   </div>
 
-  <form class="space-y-4">
+  <!-- Error Message -->
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 p-3 rounded-lg mb-4">
+      <p class="text-red-800 text-sm">{{ error() }}</p>
+    </div>
+  }
+
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
     <div>
-      <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+      <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
       <input
         type="email"
         id="email"
+        formControlName="email"
         pInputText
         class="w-full"
         placeholder="seu@email.com"
+        [class.ng-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
       />
+      @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+        <small class="text-red-600">{{ getErrorMessage('email') }}</small>
+      }
     </div>
 
     <div>
-      <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+      <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Senha *</label>
       <p-password
         id="password"
+        formControlName="password"
         styleClass="w-full"
         [inputStyle]="{'width': '100%'}"
         [feedback]="false"
+        [toggleMask]="true"
         placeholder="Digite sua senha"
+        [class.ng-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
       />
+      @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+        <small class="text-red-600">{{ getErrorMessage('password') }}</small>
+      }
     </div>
 
     <div class="flex items-center justify-between">
@@ -34,9 +52,12 @@
     </div>
 
     <p-button
+      type="submit"
       label="Entrar"
       styleClass="w-full"
       [raised]="true"
+      [loading]="loading()"
+      [disabled]="loading()"
     />
   </form>
 
