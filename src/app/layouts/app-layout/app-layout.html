@@ -33,9 +33,37 @@
             }
           </button>
 
-          <button class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-            Sair
-          </button>
+          <!-- User Menu (logged in) -->
+          @if (isLoggedIn()) {
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ userName() }}
+              </span>
+              <button
+                #userMenuButton
+                type="button"
+                (click)="userMenu.toggle($event)"
+                class="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors"
+                aria-label="Menu do usuário"
+              >
+                <i class="pi pi-user text-xl"></i>
+              </button>
+              <p-menu
+                #userMenu
+                [model]="userMenuItems()"
+                [popup]="true"
+                appendTo="body"
+              />
+            </div>
+          } @else {
+            <!-- Login Button (not logged in) -->
+            <button
+              (click)="goToLogin()"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Entrar
+            </button>
+          }
         </div>
       </div>
     </div>

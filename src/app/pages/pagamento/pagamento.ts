@@ -1,8 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { filter } from 'rxjs';
+import { PurchaseService, PurchaseData } from '../../services/purchase.service';
 
 @Component({
   selector: 'app-pagamento',
@@ -12,9 +13,23 @@ import { filter } from 'rxjs';
 })
 export class PagamentoComponent implements OnInit {
   router = inject(Router);
+  purchaseService = inject(PurchaseService);
+
   showSelection = true;
+  purchaseData = signal<PurchaseData | null>(null);
 
   ngOnInit() {
+    // Carrega dados da compra
+    const purchase = this.purchaseService.getPurchase();
+
+    if (!purchase) {
+      // Se não houver compra, redireciona para ingressos
+      this.router.navigate(['/ingressos']);
+      return;
+    }
+
+    this.purchaseData.set(purchase);
+
     // Verifica a URL atual
     this.checkRoute();
 

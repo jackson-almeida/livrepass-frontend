@@ -1,10 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputMaskModule } from 'primeng/inputmask';
 import { SelectModule } from 'primeng/select';
+import { PurchaseService, PurchaseData } from '../../../services/purchase.service';
 
 @Component({
   selector: 'app-pagamento-cartao',
@@ -12,8 +13,11 @@ import { SelectModule } from 'primeng/select';
   templateUrl: './pagamento-cartao.html',
   styleUrl: './pagamento-cartao.scss'
 })
-export class PagamentoCartaoComponent {
+export class PagamentoCartaoComponent implements OnInit {
   private router = inject(Router);
+  private purchaseService = inject(PurchaseService);
+
+  purchaseData = signal<PurchaseData | null>(null);
 
   meses = [
     { label: '01', value: '01' },
@@ -35,12 +39,29 @@ export class PagamentoCartaoComponent {
     return { label: ano.toString(), value: ano.toString() };
   });
 
+  ngOnInit() {
+    const purchase = this.purchaseService.getPurchase();
+    if (!purchase) {
+      this.router.navigate(['/ingressos']);
+      return;
+    }
+    this.purchaseData.set(purchase);
+  }
+
   voltarParaSelecao() {
     this.router.navigate(['/pagamento']);
   }
 
   finalizarPagamento() {
-    // Implementar lógica de pagamento
-    console.log('Processando pagamento...');
+    const purchase = this.purchaseData();
+    if (!purchase) return;
+
+    // Implementar lógica de pagamento com os dados da compra
+    console.log('Processando pagamento com cartão:', {
+      eventId: purchase.eventId,
+      total: purchase.total,
+      quantidadeInteira: purchase.quantidadeInteira,
+      quantidadeMeia: purchase.quantidadeMeia
+    });
   }
 }

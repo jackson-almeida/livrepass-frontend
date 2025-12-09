@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { EventService } from '../../services/event.service';
@@ -13,6 +14,7 @@ import { DatePipe } from '@angular/common';
 })
 export class IngressosComponent implements OnInit {
   private eventService = inject(EventService);
+  private router = inject(Router);
 
   events = signal<Event[]>([]);
   loading = signal(true);
@@ -37,8 +39,7 @@ export class IngressosComponent implements OnInit {
     });
   }
 
-  addToCart(event: Event) {
-    console.log('Adicionar ao carrinho:', event);
-    // Implementar lógica de adicionar ao carrinho
+  comprar(event: Event) {
+    this.router.navigate(['/compra', event.id]);
   }
 }
