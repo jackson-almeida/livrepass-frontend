@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 export interface PurchaseData {
   eventId: string;
   eventName: string;
+  batchId: number;
   quantidadeInteira: number;
   quantidadeMeia: number;
   precoInteira: number;
@@ -36,6 +37,11 @@ export class PurchaseService {
 
     try {
       const purchase: PurchaseData = JSON.parse(data);
+
+      if (typeof purchase.batchId !== 'number') {
+        this.clearPurchase();
+        return null;
+      }
 
       // Verifica se a compra expirou (30 minutos)
       const now = Date.now();

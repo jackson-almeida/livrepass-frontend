@@ -26,105 +26,138 @@
   }
 
   <p-card>
-    <form class="space-y-6">
-      <!-- Número do Cartão -->
-      <div>
-        <label for="cardNumber" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Número do Cartão
-        </label>
-        <p-inputMask
-          id="cardNumber"
-          mask="9999 9999 9999 9999"
-          placeholder="1234 5678 9012 3456"
-          styleClass="w-full"
-          [style]="{'width': '100%'}"
-        />
-      </div>
-
-      <!-- Nome no Cartão -->
-      <div>
-        <label for="cardName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Nome no Cartão
-        </label>
-        <input
-          type="text"
-          id="cardName"
-          pInputText
-          class="w-full"
-          placeholder="NOME COMPLETO"
-          style="text-transform: uppercase"
-        />
-      </div>
-
-      <!-- Validade e CVV -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label for="cardMonth" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Mês
-          </label>
-          <p-select
-            id="cardMonth"
-            [options]="meses"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Mês"
-            styleClass="w-full"
-            [style]="{'width': '100%'}"
-          />
+    <div class="space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Dados do cartão -->
+        <div class="space-y-4" [formGroup]="cardForm">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Número do cartão</label>
+            <p-inputMask
+              formControlName="cardNumber"
+              mask="9999 9999 9999 9999"
+              placeholder="1234 5678 9012 3456"
+              styleClass="w-full"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome impresso</label>
+            <input pInputText type="text" class="w-full" formControlName="cardholderName" placeholder="NOME COMPLETO" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mês</label>
+              <p-select
+                formControlName="expirationMonth"
+                [options]="meses"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="MM"
+                styleClass="w-full"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ano</label>
+              <p-select
+                formControlName="expirationYear"
+                [options]="anos"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="AAAA"
+                styleClass="w-full"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CVV</label>
+              <p-inputMask
+                formControlName="cvv"
+                mask="999"
+                placeholder="123"
+                styleClass="w-full"
+              />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bandeira</label>
+              <p-select
+                formControlName="paymentMethodId"
+                [options]="bandeiras"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Selecione"
+                styleClass="w-full"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Parcelas</label>
+              <p-select
+                formControlName="installments"
+                [options]="installmentsOptions"
+                optionLabel="label"
+                optionValue="value"
+                styleClass="w-full"
+              />
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label for="cardYear" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Ano
-          </label>
-          <p-select
-            id="cardYear"
-            [options]="anos"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Ano"
-            styleClass="w-full"
-            [style]="{'width': '100%'}"
-          />
-        </div>
-
-        <div>
-          <label for="cardCvv" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            CVV
-          </label>
-          <p-inputMask
-            id="cardCvv"
-            mask="999"
-            placeholder="123"
-            styleClass="w-full"
-            [style]="{'width': '100%'}"
-          />
-        </div>
-      </div>
-
-      <!-- CPF do Titular -->
-      <div>
-        <label for="cpf" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          CPF do Titular
-        </label>
-        <p-inputMask
-          id="cpf"
-          mask="999.999.999-99"
-          placeholder="000.000.000-00"
-          styleClass="w-full"
-          [style]="{'width': '100%'}"
-        />
-      </div>
-
-      <!-- Resumo do Valor -->
-      <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-        <div class="flex justify-between items-center">
-          <span class="text-lg font-semibold text-gray-700">Total a pagar:</span>
-          <span class="text-2xl font-bold text-primary-600">R$ 420,00</span>
+        <!-- Dados do comprador -->
+        <div class="space-y-4" [formGroup]="customerForm">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
+              <input pInputText type="text" formControlName="firstName" class="w-full" placeholder="Nome" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sobrenome</label>
+              <input pInputText type="text" formControlName="lastName" class="w-full" placeholder="Sobrenome" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail</label>
+            <input pInputText type="email" formControlName="email" class="w-full" placeholder="seu@email.com" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CPF</label>
+            <input pInputText type="text" formControlName="documentNumber" class="w-full" placeholder="000.000.000-00" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">DDD</label>
+              <input pInputText type="text" formControlName="phoneAreaCode" class="w-full" placeholder="11" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefone</label>
+              <input pInputText type="text" formControlName="phoneNumber" class="w-full" placeholder="99999-9999" />
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Botões -->
+      @if (errorMessage()) {
+        <div class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      @if (successMessage()) {
+        <div class="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+          {{ successMessage() }}
+        </div>
+      }
+
+      @if (paymentResult()) {
+        <div class="bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <p class="text-sm text-gray-600 dark:text-gray-400">Status</p>
+          <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ statusLabel }}</p>
+          @if (paymentResult()!.lastFourDigits) {
+            <p class="text-xs text-gray-500 mt-2">
+              Cartão final {{ paymentResult()!.lastFourDigits }} · {{ paymentResult()!.installments || 1 }}x
+            </p>
+          }
+        </div>
+      }
+
       <div class="flex gap-4">
         <p-button
           label="Cancelar"
@@ -136,10 +169,21 @@
           label="Finalizar Pagamento"
           icon="pi pi-check"
           styleClass="flex-1"
-          [raised]="true"
+          [loading]="isProcessing()"
+          [disabled]="isProcessing() || cardForm.invalid || customerForm.invalid"
           (click)="finalizarPagamento()"
         />
       </div>
-    </form>
+
+      <div class="flex gap-4">
+        <p-button
+          label="Verificar status manualmente"
+          severity="secondary"
+          styleClass="flex-1"
+          [disabled]="!paymentResult()"
+          (click)="verificarStatusManual()"
+        />
+      </div>
+    </div>
   </p-card>
 </div>

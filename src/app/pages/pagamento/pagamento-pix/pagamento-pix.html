@@ -25,56 +25,117 @@
         </div>
       }
 
-      <!-- QR Code Placeholder -->
-      <div class="flex flex-col items-center space-y-4">
-        <p class="text-sm text-gray-600 dark:text-gray-400">Escaneie o QR Code com seu aplicativo de banco</p>
-
-        <!-- QR Code Placeholder (100x100 black square) -->
-        <div class="w-[100px] h-[100px] bg-black border-4 border-gray-300 rounded-lg flex items-center justify-center">
-          <i class="pi pi-qrcode text-white text-4xl"></i>
-        </div>
-
-        <p class="text-xs text-gray-500 text-center max-w-md">
-          Use o aplicativo do seu banco para escanear o código QR acima ou copie o código abaixo
-        </p>
-      </div>
-
-      <!-- Código PIX -->
-      <div class="space-y-3">
-        <label class="block text-sm font-medium text-gray-700">
-          Código PIX Copia e Cola
-        </label>
-        <div class="relative">
-          <div class="bg-gray-100 p-4 rounded-lg border border-gray-200 break-all font-mono text-xs text-gray-700">
-            {{ pixCode }}
+      <!-- Dados do pagador -->
+      <div class="space-y-4" [formGroup]="customerForm">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
+            <input pInputText type="text" formControlName="firstName" class="w-full" placeholder="Nome" />
           </div>
-          <button
-            (click)="copiarCodigo()"
-            class="absolute top-2 right-2 bg-white p-2 rounded-md shadow-sm hover:bg-gray-50 transition-colors"
-          >
-            <i class="pi pi-copy text-primary-600"></i>
-          </button>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sobrenome</label>
+            <input pInputText type="text" formControlName="lastName" class="w-full" placeholder="Sobrenome" />
+          </div>
         </div>
-        <p class="text-xs text-gray-500">
-          Copie este código e cole no aplicativo do seu banco para fazer o pagamento
-        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail</label>
+            <input pInputText type="email" formControlName="email" class="w-full" placeholder="seu@email.com" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CPF</label>
+            <input pInputText type="text" formControlName="documentNumber" class="w-full" placeholder="000.000.000-00" />
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">DDD</label>
+            <input pInputText type="text" formControlName="phoneAreaCode" class="w-full" placeholder="11" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefone</label>
+            <input pInputText type="text" formControlName="phoneNumber" class="w-full" placeholder="99999-9999" />
+          </div>
+        </div>
       </div>
 
-      <!-- Instruções -->
-      <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-        <h4 class="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-          <i class="pi pi-info-circle"></i>
-          Como pagar com PIX
-        </h4>
-        <ol class="text-sm text-blue-800 space-y-1 ml-4 list-decimal">
-          <li>Abra o aplicativo do seu banco</li>
-          <li>Escolha a opção PIX</li>
-          <li>Escaneie o QR Code ou cole o código</li>
-          <li>Confirme as informações e finalize o pagamento</li>
-        </ol>
+      <div class="flex gap-4">
+        <p-button
+          label="Voltar"
+          severity="secondary"
+          styleClass="flex-1"
+          (click)="voltarParaSelecao()"
+        />
+        <p-button
+          label="Gerar cobrança PIX"
+          icon="pi pi-qrcode"
+          styleClass="flex-1"
+          [loading]="isGenerating()"
+          [disabled]="customerForm.invalid || isGenerating()"
+          (click)="gerarCodigoPix()"
+        />
       </div>
 
-      <!-- Botão -->
+      @if (errorMessage()) {
+        <div class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      @if (successMessage()) {
+        <div class="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+          {{ successMessage() }}
+        </div>
+      }
+
+      <!-- Detalhes do PIX -->
+      <div class="space-y-4">
+        @if (pixPayment()) {
+          <div class="flex flex-col items-center space-y-4">
+            <p class="text-sm text-gray-600 dark:text-gray-400 text-center">
+              {{ statusLabel }}
+            </p>
+            @if (qrCodeImage) {
+              <img [src]="qrCodeImage" alt="QR Code PIX" class="w-48 h-48 border border-gray-200 rounded-lg" />
+            }
+            <div class="w-full space-y-2">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Código PIX copia e cola</label>
+              <div class="relative">
+                <div class="bg-gray-100 p-4 rounded-lg border border-gray-200 break-all font-mono text-xs text-gray-700">
+                  {{ pixPayment()!.copyAndPasteCode || pixPayment()!.qrCode }}
+                </div>
+                <button
+                  type="button"
+                  (click)="copiarCodigoPix()"
+                  class="absolute top-2 right-2 bg-white p-2 rounded-md shadow-sm hover:bg-gray-50 transition-colors"
+                >
+                  <i class="pi pi-copy text-primary-600"></i>
+                </button>
+              </div>
+              <p class="text-xs text-gray-500">
+                Copie este código e cole no aplicativo do seu banco para realizar o pagamento.
+              </p>
+            </div>
+            @if (pixPayment()!.expiresAt) {
+              <p class="text-xs text-gray-500">Expira em {{ pixPayment()!.expiresAt | date: 'short':undefined:'pt' }}</p>
+            }
+          </div>
+        } @else {
+          <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+            <h4 class="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+              <i class="pi pi-info-circle"></i>
+              Como pagar com PIX
+            </h4>
+            <ol class="text-sm text-blue-800 space-y-1 ml-4 list-decimal">
+              <li>Preencha seus dados e gere o QR Code.</li>
+              <li>Abra o aplicativo do seu banco.</li>
+              <li>Escaneie o QR Code ou cole o código.</li>
+              <li>Confirme as informações e finalize o pagamento.</li>
+            </ol>
+          </div>
+        }
+      </div>
+
       <div class="flex gap-4">
         <p-button
           label="Cancelar"
@@ -86,8 +147,8 @@
           label="Já realizei o pagamento"
           icon="pi pi-check"
           styleClass="flex-1"
-          [raised]="true"
-          (click)="finalizarPagamento()"
+          [disabled]="!pixPayment()"
+          (click)="verificarPagamentoManual()"
         />
       </div>
     </div>

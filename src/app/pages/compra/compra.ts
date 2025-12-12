@@ -130,7 +130,7 @@ export class CompraComponent implements OnInit {
     }
 
     const event = this.event();
-    if (!event || !this.eventId) return;
+  if (!event || !this.eventId || !event.activeBatch) return;
 
     const precoInteira = parseFloat(event.activeBatch.price);
     const precoMeia = precoInteira / 2;
@@ -139,6 +139,7 @@ export class CompraComponent implements OnInit {
     this.purchaseService.savePurchase({
       eventId: this.eventId,
       eventName: event.name,
+      batchId: event.activeBatch.id,
       quantidadeInteira: this.quantidadeInteira(),
       quantidadeMeia: this.quantidadeMeia(),
       precoInteira: precoInteira,
