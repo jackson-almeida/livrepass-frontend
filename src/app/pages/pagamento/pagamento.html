@@ -22,31 +22,31 @@
         <div>
           <p class="text-sm text-gray-600 dark:text-gray-400">Evento</p>
           <p class="font-semibold text-gray-900 dark:text-gray-100">{{ purchaseData()!.eventName }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">{{ purchaseData()!.batchName }}</p>
         </div>
 
-        @if (purchaseData()!.quantidadeInteira > 0) {
-          <div class="flex justify-between">
-            <span class="text-gray-700 dark:text-gray-300">
-              {{ purchaseData()!.quantidadeInteira }}x Ingresso Inteira
-            </span>
-            <span class="font-semibold text-gray-900 dark:text-gray-100">
-              R$ {{ (purchaseData()!.quantidadeInteira * purchaseData()!.precoInteira).toFixed(2) }}
-            </span>
+        @if (purchaseData()!.categories.length) {
+          <div class="space-y-2">
+            @for (item of purchaseData()!.categories; track item.categoryId) {
+              <div class="flex justify-between">
+                <span class="text-gray-700 dark:text-gray-300">
+                  {{ item.quantity }}x {{ item.label }}
+                </span>
+                <span class="font-semibold text-gray-900 dark:text-gray-100">
+                  R$ {{ (item.quantity * item.unitPrice).toFixed(2) }}
+                </span>
+              </div>
+            }
           </div>
-        }
-
-        @if (purchaseData()!.quantidadeMeia > 0) {
-          <div class="flex justify-between">
-            <span class="text-gray-700 dark:text-gray-300">
-              {{ purchaseData()!.quantidadeMeia }}x Ingresso Meia
-            </span>
-            <span class="font-semibold text-gray-900 dark:text-gray-100">
-              R$ {{ (purchaseData()!.quantidadeMeia * purchaseData()!.precoMeia).toFixed(2) }}
-            </span>
-          </div>
+        } @else {
+          <p class="text-sm text-gray-500 dark:text-gray-400">Nenhum ingresso selecionado.</p>
         }
 
         <div class="pt-3 border-t dark:border-dark-border">
+          <div class="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400 mb-2">
+            <span>Total de ingressos</span>
+            <span class="font-semibold text-gray-900 dark:text-gray-100">{{ purchaseData()!.totalTickets }}</span>
+          </div>
           <div class="flex justify-between items-center">
             <span class="text-lg font-bold text-gray-900 dark:text-gray-100">Total</span>
             <span class="text-2xl font-bold text-primary-600 dark:text-primary-400">

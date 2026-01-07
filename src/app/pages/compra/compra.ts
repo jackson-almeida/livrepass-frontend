@@ -6,16 +6,28 @@ import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { PurchaseService } from '../../services/purchase.service';
 
-interface EventBatch {
+interface BatchCategory {
   id: number;
   type: string;
-  quantity: number;
+  label: string;
   price: string;
+  totalQuantity: number;
+  soldQuantity: number;
+  maxPerPurchase: number;
+  isActive: boolean;
+  remainingQuantity: number;
+}
+
+interface EventBatch {
+  id: number;
   name: string;
   description: string | null;
+  sequence: number;
+  capacity: number;
+  maxPerPurchase: number;
   releaseDate: string;
   closingDate: string;
-  createdAt: string;
+  categories: BatchCategory[];
 }
 
 interface EventDetail {
@@ -30,7 +42,10 @@ interface EventDetail {
   bannerUrl: string;
   createdAt: string;
   updatedAt: string;
-  activeBatch: EventBatch;
+  hasActiveBatch: boolean;
+  activeBatch: EventBatch | null;
+  nextBatch?: EventBatch | null;
+  nextBatchReleaseDate?: string | null;
 }
 
 @Component({
@@ -49,8 +64,7 @@ export class CompraComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
 
-  quantidadeInteira = signal(0);
-  quantidadeMeia = signal(0);
+  categorySelections = signal<Record<number, number>>({});
 
   eventId: string | null = null;
 
@@ -72,6 +86,7 @@ export class CompraComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.event.set(data);
+          this.initializeCategorySelections(data.activeBatch?.categories ?? []);
           this.loading.set(false);
         },
         error: (err) => {
@@ -81,53 +96,106 @@ export class CompraComponent implements OnInit {
       });
   }
 
-  incrementarInteira() {
-    this.quantidadeInteira.update(q => q + 1);
+  private initializeCategorySelections(categories: BatchCategory[]) {
+    const selections = categories.reduce<Record<number, number>>((acc, category) => {
+      acc[category.id] = 0;
+      return acc;
+    }, {});
+    this.categorySelections.set(selections);
   }
 
-  decrementarInteira() {
-    this.quantidadeInteira.update(q => q > 0 ? q - 1 : 0);
+  getActiveCategories(): BatchCategory[] {
+    return this.event()?.activeBatch?.categories ?? [];
   }
 
-  incrementarMeia() {
-    this.quantidadeMeia.update(q => q + 1);
+  getQuantidadeCategoria(categoryId: number): number {
+    return this.categorySelections()[categoryId] ?? 0;
   }
 
-  decrementarMeia() {
-    this.quantidadeMeia.update(q => q > 0 ? q - 1 : 0);
+  private getBatchLimit(): number {
+    return this.event()?.activeBatch?.maxPerPurchase ?? Number.MAX_SAFE_INTEGER;
+  }
+
+  private getCategoryRemaining(category: BatchCategory): number {
+    if (typeof category.remainingQuantity === 'number') {
+      return category.remainingQuantity;
+    }
+    if (typeof category.totalQuantity === 'number' && typeof category.soldQuantity === 'number') {
+      return Math.max(category.totalQuantity - category.soldQuantity, 0);
+    }
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  incrementarCategoria(category: BatchCategory) {
+    if (!category.isActive) {
+      return;
+    }
+
+    const current = this.getQuantidadeCategoria(category.id);
+    const categoryLimit = category.maxPerPurchase || Number.MAX_SAFE_INTEGER;
+    const remaining = this.getCategoryRemaining(category);
+    const batchLimit = this.getBatchLimit();
+    const totalAtual = this.getTotalIngressos();
+
+    if (
+      current >= categoryLimit ||
+      current >= remaining ||
+      totalAtual >= batchLimit
+    ) {
+      return;
+    }
+
+    this.categorySelections.update((state) => ({
+      ...state,
+      [category.id]: current + 1,
+    }));
+  }
+
+  decrementarCategoria(category: BatchCategory) {
+    const current = this.getQuantidadeCategoria(category.id);
+    if (current <= 0) {
+      return;
+    }
+
+    this.categorySelections.update((state) => ({
+      ...state,
+      [category.id]: current - 1,
+    }));
+  }
+
+  isIncrementDisabled(category: BatchCategory): boolean {
+    const current = this.getQuantidadeCategoria(category.id);
+    const categoryLimit = category.maxPerPurchase || Number.MAX_SAFE_INTEGER;
+    const remaining = this.getCategoryRemaining(category);
+    const batchLimit = this.getBatchLimit();
+    const totalAtual = this.getTotalIngressos();
+
+    return (
+      !category.isActive ||
+      current >= categoryLimit ||
+      current >= remaining ||
+      totalAtual >= batchLimit
+    );
   }
 
   calcularTotal(): number {
-    const event = this.event();
-    if (!event || !event.activeBatch) return 0;
-
-    const precoInteira = this.getPrecoInteira();
-    const precoMeia = this.getPrecoMeia();
-
-    const totalInteira = this.quantidadeInteira() * precoInteira;
-    const totalMeia = this.quantidadeMeia() * precoMeia;
-
-    return totalInteira + totalMeia;
+    return this.getActiveCategories().reduce((total, category) => {
+      const price = parseFloat(category.price);
+      const quantity = this.getQuantidadeCategoria(category.id);
+      if (!quantity || isNaN(price)) {
+        return total;
+      }
+      return total + price * quantity;
+    }, 0);
   }
 
   getTotalIngressos(): number {
-    return this.quantidadeInteira() + this.quantidadeMeia();
+    return Object.values(this.categorySelections()).reduce((sum, quantity) => sum + quantity, 0);
   }
 
   hasActiveBatch(): boolean {
     const event = this.event();
-    return !!(event && event.activeBatch);
-  }
-
-  getPrecoInteira(): number {
-    const event = this.event();
-    if (!event || !event.activeBatch) return 0;
-    return parseFloat(event.activeBatch.price);
-  }
-
-  getPrecoMeia(): number {
-    const inteira = this.getPrecoInteira();
-    return inteira / 2;
+    return !!(event && event.activeBatch && event.activeBatch.categories?.length);
   }
 
   podeComprar(): boolean {
@@ -140,20 +208,34 @@ export class CompraComponent implements OnInit {
     }
 
     const event = this.event();
-  if (!event || !this.eventId || !event.activeBatch) return;
+    if (!event || !this.eventId || !event.activeBatch) return;
 
-  const precoInteira = this.getPrecoInteira();
-  const precoMeia = this.getPrecoMeia();
+    const categoriasSelecionadas = this.getActiveCategories()
+      .map((category) => {
+        const price = parseFloat(category.price);
+        return {
+        categoryId: category.id,
+        label: category.label,
+        type: category.type,
+          unitPrice: isNaN(price) ? 0 : price,
+        quantity: this.getQuantidadeCategoria(category.id),
+        maxPerPurchase: category.maxPerPurchase,
+        };
+      })
+      .filter((item) => item.quantity > 0);
+
+    if (!categoriasSelecionadas.length) {
+      return;
+    }
 
     // Salvar dados da compra no localStorage
     this.purchaseService.savePurchase({
       eventId: this.eventId,
       eventName: event.name,
       batchId: event.activeBatch.id,
-      quantidadeInteira: this.quantidadeInteira(),
-      quantidadeMeia: this.quantidadeMeia(),
-      precoInteira: precoInteira,
-      precoMeia: precoMeia,
+      batchName: event.activeBatch.name,
+      categories: categoriasSelecionadas,
+      totalTickets: this.getTotalIngressos(),
       total: this.calcularTotal(),
       timestamp: Date.now()
     });

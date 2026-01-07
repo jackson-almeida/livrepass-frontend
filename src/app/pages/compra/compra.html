@@ -49,18 +49,22 @@
           <p class="text-gray-700 dark:text-gray-300 mt-4">{{ event()!.description }}</p>
 
           <!-- Active Batch Info -->
-          @if (event()!.activeBatch) {
+          @if (event()?.activeBatch; as batch) {
             <div class="mt-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
               <h3 class="font-semibold text-primary-900 dark:text-primary-100 mb-2">
-                {{ event()!.activeBatch.name }}
+                {{ batch.name }}
               </h3>
               <p class="text-sm text-primary-700 dark:text-primary-300">
-                {{ event()!.activeBatch.type }} -
-                <span class="font-bold">R$ {{ event()!.activeBatch.price }}</span>
+                Disponível até {{ batch.closingDate | date:'dd/MM/yyyy' }} ·
+                Máximo {{ batch.maxPerPurchase }} ingressos por compra
               </p>
-              <p class="text-xs text-primary-600 dark:text-primary-400 mt-1">
-                Disponível até {{ event()!.activeBatch.closingDate | date:'dd/MM/yyyy' }}
-              </p>
+              <div class="flex flex-wrap gap-3 mt-3">
+                @for (category of batch.categories; track category.id) {
+                  <div class="text-xs px-3 py-1 rounded-full bg-white/70 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700">
+                    {{ category.label }} · R$ {{ category.price }}
+                  </div>
+                }
+              </div>
             </div>
           }
         </div>
@@ -72,71 +76,53 @@
           <ng-template pTemplate="header">
             <div class="p-4 border-b dark:border-dark-border">
               <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Selecione seus ingressos</h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Respeite o limite de {{ event()?.activeBatch?.maxPerPurchase ?? 0 }} ingressos por compra.
+              </p>
             </div>
           </ng-template>
 
           <div class="space-y-6">
-            <!-- Ingresso Inteira -->
-            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-hover rounded-lg">
-              <div class="flex-1">
-                <h3 class="font-semibold text-gray-900 dark:text-gray-100">Ingresso Inteira</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                  R$ {{ getPrecoInteira().toFixed(2) }}
-                </p>
-              </div>
+            @for (category of getActiveCategories(); track category.id) {
+              <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-gray-50 dark:bg-dark-hover rounded-lg">
+                <div class="flex-1 space-y-1">
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ category.label }}</h3>
+                    <span class="text-xs px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                      {{ category.type }}
+                    </span>
+                  </div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    R$ {{ category.price }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Restam {{ category.remainingQuantity }} ingressos · Máx {{ category.maxPerPurchase }} por compra
+                  </p>
+                </div>
 
-              <div class="flex items-center gap-3">
-                <p-button
-                  icon="pi pi-minus"
-                  [rounded]="true"
-                  [outlined]="true"
-                  severity="secondary"
-                  (onClick)="decrementarInteira()"
-                  [disabled]="quantidadeInteira() === 0"
-                />
-                <span class="text-xl font-bold text-gray-900 dark:text-gray-100 min-w-[2rem] text-center">
-                  {{ quantidadeInteira() }}
-                </span>
-                <p-button
-                  icon="pi pi-plus"
-                  [rounded]="true"
-                  [outlined]="true"
-                  severity="secondary"
-                  (onClick)="incrementarInteira()"
-                />
+                <div class="flex items-center gap-3 self-start md:self-auto">
+                  <p-button
+                    icon="pi pi-minus"
+                    [rounded]="true"
+                    [outlined]="true"
+                    severity="secondary"
+                    (onClick)="decrementarCategoria(category)"
+                    [disabled]="getQuantidadeCategoria(category.id) === 0"
+                  />
+                  <span class="text-xl font-bold text-gray-900 dark:text-gray-100 min-w-[2rem] text-center">
+                    {{ getQuantidadeCategoria(category.id) }}
+                  </span>
+                  <p-button
+                    icon="pi pi-plus"
+                    [rounded]="true"
+                    [outlined]="true"
+                    severity="secondary"
+                    (onClick)="incrementarCategoria(category)"
+                    [disabled]="isIncrementDisabled(category)"
+                  />
+                </div>
               </div>
-            </div>
-
-            <!-- Ingresso Meia -->
-            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-hover rounded-lg">
-              <div class="flex-1">
-                <h3 class="font-semibold text-gray-900 dark:text-gray-100">Ingresso Meia-entrada</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                  R$ {{ getPrecoMeia().toFixed(2) }}
-                </p>
-              </div>
-
-              <div class="flex items-center gap-3">
-                <p-button
-                  icon="pi pi-minus"
-                  [rounded]="true"
-                  [outlined]="true"
-                  severity="secondary"
-                  (onClick)="decrementarMeia()"
-                  [disabled]="quantidadeMeia() === 0"
-                />
-                <span class="text-xl font-bold text-gray-900 dark:text-gray-100 min-w-[2rem] text-center">
-                  {{ quantidadeMeia() }}
-                </span>
-                <p-button
-                  icon="pi pi-plus"
-                  [rounded]="true"
-                  [outlined]="true"
-                  severity="secondary"
-                  (onClick)="incrementarMeia()"
-                />
-              </div>
-            </div>
+            }
           </div>
 
           <ng-template pTemplate="footer">

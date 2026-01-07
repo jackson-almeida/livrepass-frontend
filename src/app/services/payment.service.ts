@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { PurchaseData } from './purchase.service';
 import { environment } from '../config/environment';
 
-export type PricingType = 'inteira' | 'meia';
 export type PaymentMethod = 'pix' | 'card';
 export type PaymentStatus =
   | 'pending'
@@ -29,7 +28,10 @@ export interface PaymentCustomerPayload {
 
 export interface PaymentItemPayload {
   batchId: number;
-  pricingType: PricingType;
+  categoryId: number;
+  categoryLabel: string;
+  categoryType: string;
+  unitPrice: number;
   quantity: number;
 }
 
@@ -59,7 +61,7 @@ export interface PaymentSummaryResponse {
   status: PaymentStatus;
   statusDetail?: string;
   totalAmount: string;
-  items: Array<{ batchId: number; pricingType: PricingType; quantity: number; unitPrice: number; totalPrice: number }>;
+  items: Array<{ batchId: number; categoryId: number; categoryLabel: string; quantity: number; unitPrice: number; totalPrice: number }>;
   mercadoPagoPaymentId?: string;
 }
 
@@ -133,23 +135,16 @@ export class PaymentService {
   }
 
   private buildItemsFromPurchase(purchase: PurchaseData): PaymentItemPayload[] {
-    const items: PaymentItemPayload[] = [];
-
-    if (purchase.quantidadeInteira > 0) {
-      items.push({
+    const items = purchase.categories
+      .filter((category) => category.quantity > 0)
+      .map((category) => ({
         batchId: purchase.batchId,
-        pricingType: 'inteira',
-        quantity: purchase.quantidadeInteira,
-      });
-    }
-
-    if (purchase.quantidadeMeia > 0) {
-      items.push({
-        batchId: purchase.batchId,
-        pricingType: 'meia',
-        quantity: purchase.quantidadeMeia,
-      });
-    }
+        categoryId: category.categoryId,
+        categoryLabel: category.label,
+        categoryType: category.type,
+        unitPrice: category.unitPrice,
+        quantity: category.quantity,
+      }));
 
     if (!items.length) {
       throw new Error('Nenhum item selecionado para pagamento.');

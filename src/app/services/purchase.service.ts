@@ -1,13 +1,21 @@
 import { Injectable } from '@angular/core';
 
+export interface PurchaseCategorySelection {
+  categoryId: number;
+  label: string;
+  type: string;
+  unitPrice: number;
+  quantity: number;
+  maxPerPurchase: number;
+}
+
 export interface PurchaseData {
   eventId: string;
   eventName: string;
   batchId: number;
-  quantidadeInteira: number;
-  quantidadeMeia: number;
-  precoInteira: number;
-  precoMeia: number;
+  batchName: string;
+  categories: PurchaseCategorySelection[];
+  totalTickets: number;
   total: number;
   timestamp: number;
 }
@@ -38,7 +46,11 @@ export class PurchaseService {
     try {
       const purchase: PurchaseData = JSON.parse(data);
 
-      if (typeof purchase.batchId !== 'number') {
+      if (
+        typeof purchase.batchId !== 'number' ||
+        !Array.isArray(purchase.categories) ||
+        purchase.categories.some((category) => typeof category.categoryId !== 'number')
+      ) {
         this.clearPurchase();
         return null;
       }
