@@ -43,12 +43,30 @@
           </div>
 
           <ng-template pTemplate="footer">
-            <p-button
-              label="Comprar"
-              icon="pi pi-shopping-bag"
-              styleClass="w-full"
-              (onClick)="comprar(event)"
-            />
+            @if (hasActiveBatch(event)) {
+              <p-button
+                label="Comprar"
+                icon="pi pi-shopping-bag"
+                styleClass="w-full"
+                (onClick)="comprar(event)"
+              />
+            } @else {
+              <div class="text-center py-3">
+                <span class="text-sm font-semibold uppercase text-orange-600 dark:text-orange-400">
+                  Em breve
+                </span>
+
+                @if (getNextBatchReleaseDate(event)) {
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Próximo lote: {{ getNextBatchReleaseDate(event) | date: 'dd/MM/yyyy HH:mm' }}
+                  </p>
+                } @else {
+                  <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    Aguarde a abertura do próximo lote.
+                  </p>
+                }
+              </div>
+            }
           </ng-template>
         </p-card>
       }

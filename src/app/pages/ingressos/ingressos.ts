@@ -42,4 +42,16 @@ export class IngressosComponent implements OnInit {
   comprar(event: Event) {
     this.router.navigate(['/compra', event.id]);
   }
+
+  hasActiveBatch(event: Event): boolean {
+    if (typeof event.hasActiveBatch === 'boolean') {
+      return event.hasActiveBatch;
+    }
+
+    return Boolean(event.activeBatch);
+  }
+
+  getNextBatchReleaseDate(event: Event): string | null {
+    return event.nextBatchReleaseDate ?? event.nextBatch?.releaseDate ?? null;
+  }
 }

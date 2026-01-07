@@ -101,8 +101,8 @@ export class CompraComponent implements OnInit {
     const event = this.event();
     if (!event || !event.activeBatch) return 0;
 
-    const precoInteira = parseFloat(event.activeBatch.price);
-    const precoMeia = precoInteira / 2;
+    const precoInteira = this.getPrecoInteira();
+    const precoMeia = this.getPrecoMeia();
 
     const totalInteira = this.quantidadeInteira() * precoInteira;
     const totalMeia = this.quantidadeMeia() * precoMeia;
@@ -114,10 +114,20 @@ export class CompraComponent implements OnInit {
     return this.quantidadeInteira() + this.quantidadeMeia();
   }
 
-  getPrecoMeia(): number {
+  hasActiveBatch(): boolean {
+    const event = this.event();
+    return !!(event && event.activeBatch);
+  }
+
+  getPrecoInteira(): number {
     const event = this.event();
     if (!event || !event.activeBatch) return 0;
-    return parseFloat(event.activeBatch.price) / 2;
+    return parseFloat(event.activeBatch.price);
+  }
+
+  getPrecoMeia(): number {
+    const inteira = this.getPrecoInteira();
+    return inteira / 2;
   }
 
   podeComprar(): boolean {
@@ -132,8 +142,8 @@ export class CompraComponent implements OnInit {
     const event = this.event();
   if (!event || !this.eventId || !event.activeBatch) return;
 
-    const precoInteira = parseFloat(event.activeBatch.price);
-    const precoMeia = precoInteira / 2;
+  const precoInteira = this.getPrecoInteira();
+  const precoMeia = this.getPrecoMeia();
 
     // Salvar dados da compra no localStorage
     this.purchaseService.savePurchase({
