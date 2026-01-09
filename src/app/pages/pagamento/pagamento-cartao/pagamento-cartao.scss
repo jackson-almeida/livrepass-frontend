@@ -1,9 +1,12 @@
+
 .mp-field {
 	border: 1px solid #d1d5db;
-	border-radius: 0.75rem;
-	min-height: 3.25rem;
-	padding: 0.75rem 1rem;
+	border-radius: 0.5rem;
+	height: 2.60rem;
+	padding: 0.5rem 0.75rem;
 	background-color: #fff;
+	display: flex;
+	align-items: center;
 	transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
 	&:focus-within {
@@ -15,6 +18,7 @@
 		border-color: #dc2626;
 	}
 }
+
 
 :host-context(.dark) .mp-field {
 	border-color: #374151;
