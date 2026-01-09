@@ -1,12 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, AfterViewInit, inject, signal, ElementRef, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { interval, startWith, switchMap, Subscription, firstValueFrom } from 'rxjs';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { InputMaskModule } from 'primeng/inputmask';
 import { SelectModule } from 'primeng/select';
 import { PurchaseService, PurchaseData } from '../../../services/purchase.service';
 import {
@@ -24,19 +23,20 @@ import { MercadoPagoService } from '../../../services/mercadopago.service';
     CardModule,
     ButtonModule,
     InputTextModule,
-    InputMaskModule,
     SelectModule,
     ReactiveFormsModule,
   ],
   templateUrl: './pagamento-cartao.html',
   styleUrl: './pagamento-cartao.scss',
 })
-export class PagamentoCartaoComponent implements OnInit, OnDestroy {
+export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewInit {
   private router = inject(Router);
   private purchaseService = inject(PurchaseService);
   private paymentService = inject(PaymentService);
   private mercadoPagoService = inject(MercadoPagoService);
   private fb = inject(FormBuilder);
+  private hostElement = inject(ElementRef<HTMLElement>);
+  private ngZone = inject(NgZone);
 
   purchaseData = signal<PurchaseData | null>(null);
   paymentStatus = signal<PaymentStatus | null>(null);
@@ -44,18 +44,9 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy {
   isProcessing = signal(false);
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
+  cardFieldsReady = signal(false);
 
   private pollingSub?: Subscription;
-
-  meses = Array.from({ length: 12 }, (_, i) => {
-    const value = (i + 1).toString().padStart(2, '0');
-    return { label: value, value };
-  });
-
-  anos = Array.from({ length: 15 }, (_, i) => {
-    const ano = new Date().getFullYear() + i;
-    return { label: ano.toString(), value: ano.toString() };
-  });
 
   bandeiras = [
     { label: 'Visa', value: 'visa' },
@@ -65,11 +56,7 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy {
   ];
 
   cardForm = this.fb.group({
-    cardNumber: ['', [Validators.required, Validators.minLength(15)]],
     cardholderName: ['', Validators.required],
-    expirationMonth: ['', Validators.required],
-    expirationYear: ['', Validators.required],
-    cvv: ['', [Validators.required, Validators.minLength(3)]],
     paymentMethodId: ['visa', Validators.required],
     installments: [1, Validators.required],
   });
@@ -94,8 +81,13 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy {
     this.purchaseData.set(purchase);
   }
 
+  ngAfterViewInit(): void {
+    this.ngZone.runOutsideAngular(() => queueMicrotask(() => this.initializeCardFields()));
+  }
+
   ngOnDestroy(): void {
     this.stopPolling();
+    this.mercadoPagoService.unmountCardFields();
   }
 
   voltarParaSelecao() {
@@ -108,9 +100,12 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.cardForm.invalid || this.customerForm.invalid) {
+    if (this.cardForm.invalid || this.customerForm.invalid || !this.cardFieldsReady()) {
       this.cardForm.markAllAsTouched();
       this.customerForm.markAllAsTouched();
+      if (!this.cardFieldsReady()) {
+        this.errorMessage.set('Os campos seguros do cartão ainda estão carregando.');
+      }
       return;
     }
 
@@ -149,6 +144,7 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy {
     } catch (error) {
       const message =
         (error as { message?: string })?.message || 'Não foi possível processar o pagamento.';
+      console.error('Falha ao finalizar pagamento', error);
       this.errorMessage.set(message);
     } finally {
       this.isProcessing.set(false);
@@ -205,11 +201,7 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy {
   private async createCardToken(): Promise<string> {
     const value = this.cardForm.value;
     const token = await this.mercadoPagoService.createCardToken({
-      cardholderName: value.cardholderName!,
-      cardNumber: value.cardNumber!.replace(/\s+/g, ''),
-      cardExpirationMonth: value.expirationMonth!,
-      cardExpirationYear: value.expirationYear!,
-      securityCode: value.cvv!,
+      cardholderName: value.cardholderName!.trim(),
       identificationType: 'CPF',
       identificationNumber: this.customerForm.value.documentNumber!.replace(/\D/g, ''),
     });
@@ -219,6 +211,22 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy {
     }
 
     return token.id;
+  }
+
+  private async initializeCardFields(): Promise<void> {
+    this.cardFieldsReady.set(false);
+
+    try {
+      await this.mercadoPagoService.mountCardFields({
+        cardNumberContainerId: this.ensureFieldElement('card-number-field'),
+        expirationDateContainerId: this.ensureFieldElement('card-expiration-field'),
+        securityCodeContainerId: this.ensureFieldElement('card-security-field'),
+      });
+      this.cardFieldsReady.set(true);
+    } catch (error) {
+      const message = (error as { message?: string })?.message || 'Não foi possível inicializar os campos do cartão.';
+      this.errorMessage.set(message);
+    }
   }
 
   private startPolling(purchaseId: string) {
@@ -245,6 +253,14 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy {
       this.pollingSub.unsubscribe();
       this.pollingSub = undefined;
     }
+  }
+
+  private ensureFieldElement(id: string): string {
+    const element = this.hostElement.nativeElement.querySelector(`#${id}`);
+    if (!element) {
+      throw new Error(`Elemento ${id} não encontrado para montar o campo seguro.`);
+    }
+    return id;
   }
 
   private isApproved(status: PaymentStatus): boolean {

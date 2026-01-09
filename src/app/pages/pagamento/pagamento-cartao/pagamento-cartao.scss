@@ -1,1 +1,27 @@
-// Pagamento Cartão styles
+.mp-field {
+	border: 1px solid #d1d5db;
+	border-radius: 0.75rem;
+	min-height: 3.25rem;
+	padding: 0.75rem 1rem;
+	background-color: #fff;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+	&:focus-within {
+		border-color: #2563eb;
+		box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+	}
+
+	&.error {
+		border-color: #dc2626;
+	}
+}
+
+:host-context(.dark) .mp-field {
+	border-color: #374151;
+	background-color: #1f2937;
+
+	&:focus-within {
+		border-color: #60a5fa;
+		box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25);
+	}
+}

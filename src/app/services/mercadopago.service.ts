@@ -4,12 +4,14 @@ import { environment } from '../config/environment';
 
 export interface CardTokenPayload {
   cardholderName: string;
-  cardNumber: string;
-  cardExpirationMonth: string;
-  cardExpirationYear: string;
-  securityCode: string;
   identificationType: string;
   identificationNumber: string;
+}
+
+export interface CardFieldsMountConfig {
+  cardNumberContainerId: string;
+  expirationDateContainerId: string;
+  securityCodeContainerId: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -17,12 +19,83 @@ export class MercadoPagoService {
   private readonly scriptUrl = 'https://sdk.mercadopago.com/js/v2';
   private scriptPromise?: Promise<void>;
   private mercadoPagoInstance: any;
+  private fieldsApi: any;
+  private cardNumberField?: any;
+  private expirationDateField?: any;
+  private securityCodeField?: any;
 
   constructor(@Inject(DOCUMENT) private document: Document) {}
 
   async createCardToken(payload: CardTokenPayload): Promise<{ id: string; first_six_digits: string } & Record<string, unknown>> {
+    const fields = await this.getFieldsApi();
+
+    if (fields?.createCardToken) {
+      return fields.createCardToken(payload);
+    }
+
     const mp = await this.getInstance();
-    return mp.cardToken.create(payload);
+    if (mp?.cardToken?.create) {
+      return mp.cardToken.create(payload);
+    }
+
+    throw new Error('SDK do Mercado Pago não possui o método de criação de token disponível.');
+  }
+
+  async mountCardFields(config: CardFieldsMountConfig): Promise<void> {
+    const fields = await this.getFieldsApi();
+
+    this.unmountCardFields();
+
+    const baseStyle = {
+      style: {
+        input: {
+          color: '#1f2937',
+          'font-size': '1rem',
+          'font-family': 'inherit',
+        },
+        'input::placeholder': {
+          color: '#9ca3af',
+        },
+        label: {
+          color: '#6b7280',
+        },
+      },
+    };
+
+    this.cardNumberField = fields.create('cardNumber', {
+      placeholder: '0000 0000 0000 0000',
+      ...baseStyle,
+    });
+
+    this.expirationDateField = fields.create('expirationDate', {
+      placeholder: 'MM/AA',
+      ...baseStyle,
+    });
+
+    this.securityCodeField = fields.create('securityCode', {
+      placeholder: 'CVV',
+      ...baseStyle,
+    });
+
+    await Promise.all([
+      this.cardNumberField.mount(config.cardNumberContainerId),
+      this.expirationDateField.mount(config.expirationDateContainerId),
+      this.securityCodeField.mount(config.securityCodeContainerId),
+    ]);
+  }
+
+  unmountCardFields(): void {
+    this.cardNumberField?.unmount?.();
+    this.expirationDateField?.unmount?.();
+    this.securityCodeField?.unmount?.();
+
+    this.cardNumberField = undefined;
+    this.expirationDateField = undefined;
+    this.securityCodeField = undefined;
+  }
+
+  areCardFieldsMounted(): boolean {
+    return !!(this.cardNumberField && this.expirationDateField && this.securityCodeField);
   }
 
   private async getInstance(): Promise<any> {
@@ -46,6 +119,20 @@ export class MercadoPagoService {
     return this.mercadoPagoInstance;
   }
 
+  private async getFieldsApi(): Promise<any> {
+    if (this.fieldsApi) {
+      return this.fieldsApi;
+    }
+
+    const mp = await this.getInstance();
+    if (!mp?.fields) {
+      throw new Error('Campos seguros do Mercado Pago não estão disponíveis.');
+    }
+
+    this.fieldsApi = mp.fields;
+    return this.fieldsApi;
+  }
+
   private ensureScriptLoaded(): Promise<void> {
     if ((window as unknown as { MercadoPago?: any }).MercadoPago) {
       return Promise.resolve();
@@ -64,4 +151,5 @@ export class MercadoPagoService {
 
     return this.scriptPromise;
   }
+
 }

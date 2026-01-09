@@ -32,48 +32,23 @@
         <div class="space-y-4" [formGroup]="cardForm">
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Número do cartão</label>
-            <p-inputMask
-              formControlName="cardNumber"
-              mask="9999 9999 9999 9999"
-              placeholder="1234 5678 9012 3456"
-              styleClass="w-full"
-            />
+            <div id="card-number-field" class="mp-field"></div>
+            @if (!cardFieldsReady()) {
+              <p class="text-xs text-gray-500 mt-1">Carregando campo seguro...</p>
+            }
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome impresso</label>
             <input pInputText type="text" class="w-full" formControlName="cardholderName" placeholder="NOME COMPLETO" />
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mês</label>
-              <p-select
-                formControlName="expirationMonth"
-                [options]="meses"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="MM"
-                styleClass="w-full"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ano</label>
-              <p-select
-                formControlName="expirationYear"
-                [options]="anos"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="AAAA"
-                styleClass="w-full"
-              />
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Validade</label>
+              <div id="card-expiration-field" class="mp-field"></div>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CVV</label>
-              <p-inputMask
-                formControlName="cvv"
-                mask="999"
-                placeholder="123"
-                styleClass="w-full"
-              />
+              <div id="card-security-field" class="mp-field"></div>
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -170,7 +145,7 @@
           icon="pi pi-check"
           styleClass="flex-1"
           [loading]="isProcessing()"
-          [disabled]="isProcessing() || cardForm.invalid || customerForm.invalid"
+          [disabled]="isProcessing() || cardForm.invalid || customerForm.invalid || !cardFieldsReady()"
           (click)="finalizarPagamento()"
         />
       </div>
