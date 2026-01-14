@@ -133,13 +133,12 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
       );
 
       this.paymentResult.set(response);
-      this.paymentStatus.set(response.status);
-      if (this.isApproved(response.status)) {
-        this.successMessage.set('Pagamento aprovado! Seus ingressos serão liberados em instantes.');
-        this.stopPolling();
-      } else {
-        this.successMessage.set('Pagamento enviado. Estamos aguardando a confirmação.');
+      this.applyStatusFeedback(response.status, response.statusDetail);
+
+      if (this.isPending(response.status)) {
         this.startPolling(response.purchaseId);
+      } else {
+        this.stopPolling();
       }
     } catch (error) {
       const message =
@@ -159,9 +158,8 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
 
     try {
       const status = await firstValueFrom(this.paymentService.getPaymentStatus(result.purchaseId));
-      this.paymentStatus.set(status.status);
-      if (this.isApproved(status.status)) {
-        this.successMessage.set('Pagamento confirmado!');
+      this.applyStatusFeedback(status.status, status.statusDetail);
+      if (!this.isPending(status.status)) {
         this.stopPolling();
       }
     } catch (error) {
@@ -178,10 +176,18 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
       case 'in_process':
       case 'pending':
         return 'Pagamento em processamento';
+      case 'in_mediation':
+        return 'Pagamento em mediação';
       case 'rejected':
         return 'Pagamento rejeitado';
+      case 'cancelled':
+        return 'Pagamento cancelado';
+      case 'refunded':
+        return 'Pagamento estornado';
+      case 'charged_back':
+        return 'Pagamento contestado';
       default:
-        return status ? status.toUpperCase() : 'Sem status ainda';
+        return status ? this.formatStatusLabel(status) : 'Sem status ainda';
     }
   }
 
@@ -238,9 +244,8 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
       )
       .subscribe({
         next: (status) => {
-          this.paymentStatus.set(status.status);
-          if (this.isApproved(status.status)) {
-            this.successMessage.set('Pagamento confirmado!');
+          this.applyStatusFeedback(status.status, status.statusDetail);
+          if (!this.isPending(status.status)) {
             this.stopPolling();
           }
         },
@@ -265,5 +270,60 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
 
   private isApproved(status: PaymentStatus): boolean {
     return status === 'approved' || status === 'authorized';
+  }
+
+  private isPending(status: PaymentStatus): boolean {
+    return status === 'pending' || status === 'in_process' || status === 'in_mediation';
+  }
+
+  private isRejected(status: PaymentStatus): boolean {
+    return status === 'rejected' || status === 'cancelled' || status === 'refunded' || status === 'charged_back';
+  }
+
+  private applyStatusFeedback(status: PaymentStatus, statusDetail?: string) {
+    this.paymentStatus.set(status);
+
+    if (this.isApproved(status)) {
+      this.errorMessage.set(null);
+      this.successMessage.set('Pagamento aprovado! Seus ingressos serão liberados em instantes.');
+      return;
+    }
+
+    if (this.isRejected(status)) {
+      this.successMessage.set(null);
+      this.errorMessage.set(this.getRejectionMessage(statusDetail));
+      return;
+    }
+
+    if (this.isPending(status)) {
+      this.errorMessage.set(null);
+      this.successMessage.set('Pagamento enviado. Estamos aguardando a confirmação.');
+      return;
+    }
+
+    this.successMessage.set(null);
+    this.errorMessage.set(`Status do pagamento: ${this.formatStatusLabel(status)}.`);
+  }
+
+  private getRejectionMessage(statusDetail?: string): string {
+    const messages: Record<string, string> = {
+      cc_rejected_other_reason: 'Pagamento rejeitado pelo emissor. Verifique com o banco ou tente outro cartão.',
+      cc_rejected_bad_filled_card_number: 'Pagamento rejeitado. Confira o número do cartão informado.',
+      cc_rejected_bad_filled_security_code: 'Pagamento rejeitado. Confira o código de segurança.',
+      cc_rejected_bad_filled_date: 'Pagamento rejeitado. Verifique a data de validade do cartão.',
+      cc_rejected_insufficient_amount: 'Pagamento rejeitado por saldo/crédito insuficiente.',
+      cc_rejected_call_for_authorize: 'Pagamento rejeitado. Entre em contato com o emissor para liberar a transação.',
+      cc_rejected_bad_filled_other: 'Pagamento rejeitado. Revise os dados do cartão.',
+    };
+
+    if (!statusDetail) {
+      return 'Pagamento rejeitado. Confira os dados do cartão ou tente outro método.';
+    }
+
+    return messages[statusDetail] || `Pagamento rejeitado (${statusDetail}). Confira os dados ou tente outro método.`;
+  }
+
+  private formatStatusLabel(status: PaymentStatus): string {
+    return status.replace(/_/g, ' ');
   }
 }
