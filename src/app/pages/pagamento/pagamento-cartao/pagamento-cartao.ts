@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, AfterViewInit, inject, signal, ElementRef, NgZone } from '@angular/core';
+import { CommonModule, CurrencyPipe } from '@angular/common';
+import { Component, OnDestroy, OnInit, AfterViewInit, inject, signal, ElementRef, NgZone, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { interval, startWith, switchMap, Subscription, firstValueFrom } from 'rxjs';
@@ -15,11 +15,14 @@ import {
   PaymentStatus,
 } from '../../../services/payment.service';
 import { MercadoPagoService } from '../../../services/mercadopago.service';
+import { ProductSelectionService } from '../../../services/product-selection.service';
+import { ProductPurchaseCustomer, ProductSaleReference } from '../../../models/product.model';
 
 @Component({
   selector: 'app-pagamento-cartao',
   imports: [
     CommonModule,
+    CurrencyPipe,
     CardModule,
     ButtonModule,
     InputTextModule,
@@ -34,6 +37,7 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
   private purchaseService = inject(PurchaseService);
   private paymentService = inject(PaymentService);
   private mercadoPagoService = inject(MercadoPagoService);
+  private productSelectionService = inject(ProductSelectionService);
   private fb = inject(FormBuilder);
   private hostElement = inject(ElementRef<HTMLElement>);
   private ngZone = inject(NgZone);
@@ -45,6 +49,8 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
   cardFieldsReady = signal(false);
+  productsTotal = computed(() => this.productSelectionService.getTotalAmount());
+  totalToPay = computed(() => (this.purchaseData()?.total ?? 0) + this.productsTotal());
 
   private pollingSub?: Subscription;
 
@@ -117,6 +123,8 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
       const cardToken = await this.createCardToken();
       const customer = this.buildCustomerPayload();
       const cardholderName = this.cardForm.value.cardholderName?.trim();
+      const productCustomer = this.buildProductPurchaseCustomer();
+      const productSales = await this.prepareProductSales(productCustomer);
 
       const response = await firstValueFrom(
         this.paymentService.createCardPayment(
@@ -128,7 +136,7 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
             installments: this.cardForm.value.installments!,
             holderName: cardholderName,
           },
-          { description: `Ingressos para ${purchase.eventName}` },
+          { description: `Ingressos para ${purchase.eventName}`, productSales },
         ),
       );
 
@@ -202,6 +210,40 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
       phoneAreaCode: value.phoneAreaCode || undefined,
       phoneNumber: value.phoneNumber?.replace(/\D/g, ''),
     };
+  }
+
+  private buildProductPurchaseCustomer(): ProductPurchaseCustomer {
+    const value = this.customerForm.value;
+    const firstName = value.firstName?.trim() || '';
+    const lastName = value.lastName?.trim() || '';
+    const fullName = `${firstName} ${lastName}`.trim() || firstName || lastName || 'Cliente';
+    const documentNumber = value.documentNumber?.replace(/\D/g, '') || '';
+    const phone = this.buildInternationalPhone(value.phoneAreaCode, value.phoneNumber);
+
+    return {
+      fullName,
+      email: value.email!,
+      documentNumber,
+      phoneNumber: phone,
+    };
+  }
+
+  private buildInternationalPhone(areaCode?: string | null, phone?: string | null): string | undefined {
+    const area = areaCode?.replace(/\D/g, '');
+    const number = phone?.replace(/\D/g, '');
+    if (!area || !number) {
+      return undefined;
+    }
+    return `+55 ${area} ${number}`;
+  }
+
+  private async prepareProductSales(customer: ProductPurchaseCustomer): Promise<ProductSaleReference[]> {
+    if (!this.productSelectionService.hasSelections()) {
+      return [];
+    }
+
+    await this.productSelectionService.ensureSaleReservations(customer);
+    return this.productSelectionService.getSaleReferences();
   }
 
   private async createCardToken(): Promise<string> {
@@ -286,6 +328,7 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
     if (this.isApproved(status)) {
       this.errorMessage.set(null);
       this.successMessage.set('Pagamento aprovado! Seus ingressos serão liberados em instantes.');
+      this.productSelectionService.clearSelections();
       return;
     }
 

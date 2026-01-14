@@ -1,0 +1,22 @@
+.product-card__cover {
+  position: relative;
+}
+
+.product-card__cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  background: linear-gradient(140deg, rgba(15, 118, 110, 0.08), rgba(59, 130, 246, 0.1));
+  pointer-events: none;
+}
+
+:host ::ng-deep .p-card {
+  border-radius: 1.25rem;
+}
+
+:host ::ng-deep .p-card .p-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}

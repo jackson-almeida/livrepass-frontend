@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PurchaseData } from './purchase.service';
 import { environment } from '../config/environment';
+import { ProductSaleReference } from '../models/product.model';
 
 export type PaymentMethod = 'pix' | 'card';
 export type PaymentStatus =
@@ -41,6 +42,7 @@ interface BasePaymentPayload {
   items: PaymentItemPayload[];
   description?: string;
   clientIp?: string;
+  productSales?: ProductSaleReference[];
 }
 
 export interface PixPaymentRequest extends BasePaymentPayload {
@@ -80,6 +82,19 @@ export interface CardPaymentResponse extends PaymentSummaryResponse {
   cardHolderName?: string;
 }
 
+interface PixPaymentOptions {
+  description?: string;
+  returnUrl?: string;
+  clientIp?: string;
+  productSales?: ProductSaleReference[];
+}
+
+interface CardPaymentOptions {
+  description?: string;
+  clientIp?: string;
+  productSales?: ProductSaleReference[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
   private http = inject(HttpClient);
@@ -88,7 +103,7 @@ export class PaymentService {
   createPixPayment(
     purchase: PurchaseData,
     customer: PaymentCustomerPayload,
-    options?: { description?: string; returnUrl?: string; clientIp?: string },
+    options?: PixPaymentOptions,
   ): Observable<PixPaymentResponse> {
     const payload: PixPaymentRequest = {
       eventId: Number(purchase.eventId),
@@ -98,6 +113,10 @@ export class PaymentService {
       clientIp: options?.clientIp,
       returnUrl: options?.returnUrl,
     };
+
+    if (options?.productSales?.length) {
+      payload.productSales = options.productSales;
+    }
 
     return this.http.post<PixPaymentResponse>(`${this.baseUrl}/payments/pix`, payload);
   }
@@ -112,7 +131,7 @@ export class PaymentService {
       issuerId?: string;
       holderName?: string;
     },
-    options?: { description?: string; clientIp?: string },
+    options?: CardPaymentOptions,
   ): Observable<CardPaymentResponse> {
     const payload: CardPaymentRequest = {
       eventId: Number(purchase.eventId),
@@ -126,6 +145,10 @@ export class PaymentService {
       installments: card.installments,
       cardHolderName: card.holderName,
     };
+
+    if (options?.productSales?.length) {
+      payload.productSales = options.productSales;
+    }
 
     return this.http.post<CardPaymentResponse>(`${this.baseUrl}/payments/card`, payload);
   }

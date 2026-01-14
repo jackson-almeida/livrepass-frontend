@@ -20,8 +20,13 @@
         <div class="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg border border-primary-200 dark:border-primary-800 text-center">
           <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Valor a pagar</p>
           <p class="text-3xl font-bold text-primary-600 dark:text-primary-400">
-            R$ {{ purchaseData()!.total.toFixed(2) }}
+            {{ totalToPay() | currency: 'BRL':'symbol-narrow':'1.2-2' }}
           </p>
+          @if (productsTotal() > 0) {
+            <p class="text-xs text-gray-500 mt-2">
+              Inclui {{ productsTotal() | currency: 'BRL':'symbol-narrow':'1.2-2' }} em produtos adicionados.
+            </p>
+          }
         </div>
       }
 

@@ -1,22 +1,24 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { CommonModule, CurrencyPipe } from '@angular/common';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { interval, startWith, switchMap, Subscription, firstValueFrom } from 'rxjs';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { PurchaseService, PurchaseData } from '../../../services/purchase.service';
+import { PurchaseData, PurchaseService } from '../../../services/purchase.service';
 import {
   PaymentCustomerPayload,
   PaymentService,
   PaymentStatus,
   PixPaymentResponse,
 } from '../../../services/payment.service';
+import { ProductSelectionService } from '../../../services/product-selection.service';
+import { ProductPurchaseCustomer, ProductSaleReference } from '../../../models/product.model';
 
 @Component({
   selector: 'app-pagamento-pix',
-  imports: [CommonModule, CardModule, ButtonModule, ReactiveFormsModule, InputTextModule],
+  imports: [CommonModule, CurrencyPipe, CardModule, ButtonModule, ReactiveFormsModule, InputTextModule],
   templateUrl: './pagamento-pix.html',
   styleUrl: './pagamento-pix.scss',
 })
@@ -24,6 +26,7 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private purchaseService = inject(PurchaseService);
   private paymentService = inject(PaymentService);
+  private productSelectionService = inject(ProductSelectionService);
   private fb = inject(FormBuilder);
 
   purchaseData = signal<PurchaseData | null>(null);
@@ -32,6 +35,8 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
   isGenerating = signal(false);
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
+  productsTotal = computed(() => this.productSelectionService.getTotalAmount());
+  totalToPay = computed(() => (this.purchaseData()?.total ?? 0) + this.productsTotal());
 
   private pollingSub?: Subscription;
 
@@ -62,7 +67,7 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
     this.router.navigate(['/pagamento']);
   }
 
-  gerarCodigoPix(): void {
+  async gerarCodigoPix(): Promise<void> {
     const purchase = this.purchaseData();
     if (!purchase) {
       return;
@@ -79,24 +84,30 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
 
     const customer = this.buildCustomerPayload();
 
-    this.paymentService
-      .createPixPayment(purchase, customer, {
-        description: `Ingressos para ${purchase.eventName}`,
-        returnUrl: window.location.origin + '/pagamento/pix',
-      })
-      .subscribe({
-        next: (response) => {
-          this.pixPayment.set(response);
-          this.paymentStatus.set(response.status);
-          this.successMessage.set('PIX gerado! Use o QR Code ou copie o código.');
-          this.startPolling(response.purchaseId);
-        },
-        error: (err) => {
-          const message = err?.error?.message || 'Não foi possível gerar o PIX. Tente novamente.';
-          this.errorMessage.set(message);
-        },
-        complete: () => this.isGenerating.set(false),
-      });
+    try {
+      const productCustomer = this.buildProductPurchaseCustomer();
+      const productSales = await this.prepareProductSales(productCustomer);
+      const response = await firstValueFrom(
+        this.paymentService.createPixPayment(purchase, customer, {
+          description: `Ingressos para ${purchase.eventName}`,
+          returnUrl: window.location.origin + '/pagamento/pix',
+          productSales,
+        }),
+      );
+
+      this.pixPayment.set(response);
+      this.paymentStatus.set(response.status);
+      if (this.isApproved(response.status)) {
+        this.productSelectionService.clearSelections();
+      }
+      this.successMessage.set('PIX gerado! Use o QR Code ou copie o código.');
+      this.startPolling(response.purchaseId);
+    } catch (err) {
+      const fallback = (err as { message?: string })?.message || (err as { error?: { message?: string } })?.error?.message;
+      this.errorMessage.set(fallback || 'Não foi possível gerar o PIX. Tente novamente.');
+    } finally {
+      this.isGenerating.set(false);
+    }
   }
 
   async verificarPagamentoManual(): Promise<void> {
@@ -110,6 +121,7 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
       this.paymentStatus.set(status.status);
       if (this.isApproved(status.status)) {
         this.successMessage.set('Pagamento confirmado! Seu pedido está sendo processado.');
+        this.productSelectionService.clearSelections();
         this.stopPolling();
       }
     } catch (error) {
@@ -164,6 +176,40 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
     };
   }
 
+  private buildProductPurchaseCustomer(): ProductPurchaseCustomer {
+    const value = this.customerForm.value;
+    const firstName = value.firstName?.trim() || '';
+    const lastName = value.lastName?.trim() || '';
+    const fullName = `${firstName} ${lastName}`.trim() || firstName || lastName || 'Cliente';
+    const documentNumber = value.documentNumber?.replace(/\D/g, '') || '';
+    const phoneNumber = this.buildInternationalPhone(value.phoneAreaCode, value.phoneNumber);
+
+    return {
+      fullName,
+      email: value.email!,
+      documentNumber,
+      phoneNumber,
+    };
+  }
+
+  private buildInternationalPhone(areaCode?: string | null, phone?: string | null): string | undefined {
+    const area = areaCode?.replace(/\D/g, '');
+    const number = phone?.replace(/\D/g, '');
+    if (!area || !number) {
+      return undefined;
+    }
+    return `+55 ${area} ${number}`;
+  }
+
+  private async prepareProductSales(customer: ProductPurchaseCustomer): Promise<ProductSaleReference[]> {
+    if (!this.productSelectionService.hasSelections()) {
+      return [];
+    }
+
+    await this.productSelectionService.ensureSaleReservations(customer);
+    return this.productSelectionService.getSaleReferences();
+  }
+
   private startPolling(purchaseId: string) {
     this.stopPolling();
     this.pollingSub = interval(5000)
@@ -176,6 +222,7 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
           this.paymentStatus.set(status.status);
           if (this.isApproved(status.status)) {
             this.successMessage.set('Pagamento confirmado! Seu pedido está sendo processado.');
+            this.productSelectionService.clearSelections();
             this.stopPolling();
           }
         },

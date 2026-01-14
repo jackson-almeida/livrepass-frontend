@@ -19,9 +19,14 @@
       <div class="flex justify-between items-center">
         <span class="text-gray-700 dark:text-gray-300">Total a pagar</span>
         <span class="text-2xl font-bold text-primary-600 dark:text-primary-400">
-          R$ {{ purchaseData()!.total.toFixed(2) }}
+          {{ totalToPay() | currency: 'BRL':'symbol-narrow':'1.2-2' }}
         </span>
       </div>
+      @if (productsTotal() > 0) {
+        <p class="text-xs text-gray-500 mt-2">
+          Inclui {{ productsTotal() | currency: 'BRL':'symbol-narrow':'1.2-2' }} em produtos da loja.
+        </p>
+      }
     </div>
   }
 

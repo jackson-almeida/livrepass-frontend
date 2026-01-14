@@ -1,0 +1,231 @@
+<div class="space-y-8">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <p class="text-sm uppercase tracking-[0.3em] text-primary-500">Loja oficial</p>
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-50">Produtos e merchandising</h1>
+      <p class="text-gray-600 dark:text-gray-400 max-w-2xl">
+        Complete sua experiência com itens exclusivos do evento, camisetas oficiais, brindes e muito mais.
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-3">
+      <button
+        pButton
+        type="button"
+        routerLink="/carrinho"
+        label="Ver carrinho"
+        icon="pi pi-shopping-cart"
+        severity="secondary"
+      ></button>
+      <button
+        pButton
+        type="button"
+        routerLink="/pagamento"
+        label="Ir para pagamento"
+        icon="pi pi-arrow-right"
+        [disabled]="!productSelections().length"
+      ></button>
+    </div>
+  </div>
+
+  @if (feedbackMessage()) {
+    <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800 text-sm">
+      {{ feedbackMessage() }}
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700 text-sm">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <div class="grid gap-8 lg:grid-cols-[2fr,1fr]">
+    <section>
+      @if (loading()) {
+        <div class="grid gap-6 md:grid-cols-2">
+          @for (_ of [1,2,3,4]; track $index) {
+            <div class="animate-pulse rounded-2xl border border-gray-200 bg-white/40 p-6">
+              <div class="h-40 rounded-xl bg-gray-200"></div>
+              <div class="mt-4 h-6 rounded bg-gray-200"></div>
+              <div class="mt-2 h-4 rounded bg-gray-100"></div>
+              <div class="mt-8 h-10 rounded bg-gray-100"></div>
+            </div>
+          }
+        </div>
+      } @else {
+        @if (products().length) {
+          <div class="grid gap-6 md:grid-cols-2">
+            @for (product of products(); track product.id) {
+              <p-card class="h-full flex flex-col">
+                <ng-template pTemplate="header">
+                  <div class="product-card__cover">
+                    <img
+                      [src]="product.imageUrl || 'https://placehold.co/600x400/0ea5e9/ffffff?text=Produto'"
+                      [alt]="product.name"
+                      class="h-56 w-full rounded-2xl object-cover"
+                    />
+                  </div>
+                </ng-template>
+
+                <div class="flex flex-1 flex-col gap-4">
+                  <div>
+                    <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-50">{{ product.name }}</h2>
+                    @if (product.description) {
+                      <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        {{ product.description }}
+                      </p>
+                    }
+                    @if (product.tags?.length) {
+                      <div class="mt-3 flex flex-wrap gap-2">
+                        @for (tag of product.tags; track tag) {
+                          <span class="rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-600">
+                            {{ tag }}
+                          </span>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <div class="space-y-3">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-200">Variação</label>
+                    <p-select
+                      [options]="product.availabilities || []"
+                      optionLabel="label"
+                      optionValue="id"
+                      [ngModel]="selectionState()[product.id]?.availabilityId"
+                      (ngModelChange)="onAvailabilityChange(product.id, $event)"
+                      placeholder="Selecione uma opção"
+                      styleClass="w-full"
+                    />
+                  </div>
+
+                  <div class="flex flex-col gap-1">
+                    <span class="text-sm text-gray-500">Quantidade</span>
+                    <p-inputNumber
+                      [min]="1"
+                      [max]="getSelectedAvailability(product)?.maxPerPurchase || undefined"
+                      [ngModel]="selectionState()[product.id]?.quantity || 1"
+                      (ngModelChange)="onQuantityChange(product.id, $event)"
+                      [inputId]="'qty-' + product.id"
+                      mode="decimal"
+                      [showButtons]="true"
+                    />
+                    @if (getSelectedAvailability(product)?.maxPerPurchase) {
+                      <span class="text-xs text-gray-500">
+                        Máximo de {{ getSelectedAvailability(product)?.maxPerPurchase }} por pedido.
+                      </span>
+                    }
+                  </div>
+
+                  <div class="flex flex-col gap-1">
+                    <span class="text-sm text-gray-500">Investimento</span>
+                    <p class="text-2xl font-bold text-primary-600">
+                      {{ (getSelectedAvailability(product)?.price || product.basePrice || 0) | currency: 'BRL':'symbol-narrow':'1.2-2' }}
+                    </p>
+                  </div>
+
+                  <p-button
+                    label="Adicionar ao pedido"
+                    icon="pi pi-plus"
+                    [disabled]="!(product.availabilities?.length)"
+                    (click)="addToOrder(product)"
+                  />
+                </div>
+              </p-card>
+            }
+          </div>
+        } @else {
+          <div class="rounded-2xl border border-dashed border-gray-300 bg-white/60 px-6 py-12 text-center">
+            <p class="text-xl font-semibold text-gray-800">Nenhum produto disponível no momento.</p>
+            <p class="text-sm text-gray-500">Volte em breve para conferir novidades.</p>
+          </div>
+        }
+      }
+    </section>
+
+    <aside>
+      <p-card>
+        <ng-template pTemplate="header">
+          <div class="p-4">
+            <p class="text-sm uppercase tracking-[0.3em] text-gray-400">Meu pedido</p>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-50">Produtos selecionados</h3>
+          </div>
+        </ng-template>
+
+        <div class="space-y-4">
+          @if (productSelections().length) {
+            <div class="space-y-4">
+              @for (item of productSelections(); track item.productId + '-' + item.availabilityId) {
+                <div class="flex gap-3 rounded-xl border border-gray-100 p-3 dark:border-gray-800">
+                  <img
+                    [src]="item.imageUrl || 'https://placehold.co/80x80/0ea5e9/ffffff?text=+'"
+                    [alt]="item.productName"
+                    class="h-20 w-20 rounded-lg object-cover"
+                  />
+                  <div class="flex-1">
+                    <p class="font-semibold text-gray-900 dark:text-gray-50">{{ item.productName }}</p>
+                    <p class="text-xs uppercase text-gray-500">{{ item.availabilityLabel }}</p>
+                    <div class="mt-2 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                      <span>Qtd.</span>
+                      <input
+                        type="number"
+                        min="1"
+                        [ngModel]="item.quantity"
+                        (ngModelChange)="updateSelectionQuantity(item, $event)"
+                        class="w-16 rounded-md border border-gray-300 px-2 py-1 text-sm dark:bg-gray-900"
+                      />
+                    </div>
+                  </div>
+                  <div class="flex flex-col items-end justify-between text-right">
+                    <p class="text-sm font-semibold text-primary-600">
+                      {{ (item.quantity * item.unitPrice) | currency: 'BRL':'symbol-narrow':'1.2-2' }}
+                    </p>
+                    <button
+                      type="button"
+                      class="text-xs font-semibold text-red-500 hover:text-red-600"
+                      (click)="removeSelection(item.productId, item.availabilityId)"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                </div>
+              }
+
+              <div class="border-t border-gray-200 pt-4">
+                <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
+                  <span>Total</span>
+                  <span class="text-xl font-bold text-primary-600">
+                    {{ productsTotal() | currency: 'BRL':'symbol-narrow':'1.2-2' }}
+                  </span>
+                </div>
+                <p class="text-xs text-gray-500">
+                  Os produtos serão cobrados junto com o pagamento final dos ingressos.
+                </p>
+              </div>
+
+              <div class="flex flex-col gap-3 pt-2">
+                <a
+                  pButton
+                  routerLink="/carrinho"
+                  label="Revisar pedido"
+                  icon="pi pi-list"
+                  severity="secondary"
+                ></a>
+                <a
+                  pButton
+                  routerLink="/pagamento"
+                  label="Ir para pagamento"
+                  icon="pi pi-credit-card"
+                ></a>
+              </div>
+            </div>
+          } @else {
+            <div class="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
+              Nenhum produto adicionado ainda.
+            </div>
+          }
+        </div>
+      </p-card>
+    </aside>
+  </div>
+</div>
