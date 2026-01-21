@@ -32,7 +32,8 @@ export class ProductSelectionService {
       return;
     }
 
-    const normalizedQuantity = this.normalizeQuantity(quantity, availability.maxPerPurchase);
+    const maxPerPurchase = availability.maxPerPurchase ?? undefined;
+    const normalizedQuantity = this.normalizeQuantity(quantity, maxPerPurchase);
 
     this.selectionsSignal.update((current) => {
       const existingIndex = current.findIndex(
@@ -42,12 +43,12 @@ export class ProductSelectionService {
       if (existingIndex >= 0) {
         const updated = this.cloneSelections(current);
         const existing = updated[existingIndex];
-        const newQuantity = this.normalizeQuantity(existing.quantity + normalizedQuantity, availability.maxPerPurchase);
+        const newQuantity = this.normalizeQuantity(existing.quantity + normalizedQuantity, maxPerPurchase);
         updated[existingIndex] = {
           ...existing,
           quantity: newQuantity,
           unitPrice: availability.price ?? existing.unitPrice,
-          maxPerPurchase: availability.maxPerPurchase ?? existing.maxPerPurchase,
+          maxPerPurchase: maxPerPurchase ?? existing.maxPerPurchase,
           saleId: undefined,
         };
         return updated;
@@ -63,7 +64,7 @@ export class ProductSelectionService {
           unitPrice: availability.price ?? 0,
           quantity: normalizedQuantity,
           imageUrl: product.imageUrl,
-          maxPerPurchase: availability.maxPerPurchase,
+          maxPerPurchase,
         },
       ];
     });

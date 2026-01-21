@@ -1,21 +1,55 @@
+export interface ProductVariation {
+  id: string;
+  productId: string;
+  label: string;
+  sku?: string;
+  stockType?: string;
+  initialQuantity?: number | null;
+  metadata?: Record<string, unknown>;
+  metadataValues?: string[];
+  soldQuantity?: number;
+  remainingQuantity?: number | null;
+  createdAt?: string;
+  updatedAt?: string;
+  displayLabel: string;
+}
+
 export interface ProductAvailability {
   id: string;
   label: string;
+  title?: string;
   price: number;
   currency?: string;
-  remainingQuantity?: number;
-  maxPerPurchase?: number;
+  description?: string;
+  productId?: string;
+  variationId?: string | null;
+  remainingQuantity?: number | null;
+  initialQuantity?: number | null;
+  maxPerPurchase?: number | null;
+  status?: string;
+  releaseAt?: string | null;
+  closeAt?: string | null;
+  channel?: string;
+  soldQuantity?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Product {
   id: string;
+  eventId?: number;
   name: string;
   description?: string;
+  sku?: string;
   imageUrl?: string;
   tags?: string[];
   isActive?: boolean;
   basePrice?: number;
+  metadata?: Record<string, unknown>;
+  variations?: ProductVariation[];
   availabilities?: ProductAvailability[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ProductPurchaseCustomer {

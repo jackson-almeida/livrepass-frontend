@@ -46,6 +46,8 @@ interface BasePaymentPayload {
 }
 
 export interface PixPaymentRequest extends BasePaymentPayload {
+  paymentMethodId: 'pix';
+  payment_method_id?: 'pix';
   returnUrl?: string;
 }
 
@@ -112,6 +114,8 @@ export class PaymentService {
       description: options?.description,
       clientIp: options?.clientIp,
       returnUrl: options?.returnUrl,
+      paymentMethodId: 'pix',
+      payment_method_id: 'pix',
     };
 
     if (options?.productSales?.length) {
