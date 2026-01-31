@@ -56,7 +56,7 @@ export class RegisterComponent {
       cpf: this.registerForm.get('cpf')?.value.replace(/\D/g, '')
     };
 
-    this.http.post('http://localhost:3000/api/auth/register', payload).subscribe({
+    this.http.post('http://192.168.1.69:3000/api/auth/register', payload).subscribe({
       next: () => {
         this.loading.set(false);
         this.router.navigate(['/auth/login']);

@@ -23,7 +23,8 @@ const getValue = (key, fallback = '') => {
 };
 
 const envObject = {
-  NG_APP_API_URL: getValue('NG_APP_API_URL', 'http://localhost:3000/api'),
+  NG_APP_API_URL: getValue('NG_APP_API_URL', 'http://192.168.1.69:3000/api'),
+  NG_APP_QUEUE_URL: getValue('NG_APP_QUEUE_URL', 'http://192.168.1.69:3000'),
   NG_APP_MP_PUBLIC_KEY: getValue('NG_APP_MP_PUBLIC_KEY', ''),
 };
 

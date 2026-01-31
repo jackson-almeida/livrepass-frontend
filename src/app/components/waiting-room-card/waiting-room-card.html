@@ -1,0 +1,70 @@
+<section
+  class="waiting-room-card"
+  [class.waiting-room-card--muted]="normalizedState === 'checking'"
+  [class.waiting-room-card--error]="normalizedState === 'error'"
+>
+  <div class="waiting-room__badge">
+    <i
+      class="pi"
+      [class.pi-clock]="normalizedState === 'waiting'"
+      [class.pi-bolt]="normalizedState === 'checking'"
+      [class.pi-exclamation-triangle]="normalizedState === 'error'"
+    ></i>
+    @switch (normalizedState) {
+      @case ('waiting') {
+        Sala de espera ativa
+      }
+      @case ('checking') {
+        Validando acesso
+      }
+      @case ('error') {
+        Falha na fila virtual
+      }
+    }
+  </div>
+
+  <h2 class="waiting-room__title">{{ title }}</h2>
+  <p class="waiting-room__subtitle">{{ subtitle }}</p>
+
+  @if (normalizedState === 'waiting') {
+    <div class="waiting-room__position">
+      <span class="waiting-room__label">Posição atual</span>
+      <span class="waiting-room__value">{{ position ?? '...' }}</span>
+      <span class="waiting-room__hint">Atualizamos sua posição a cada 5 segundos</span>
+    </div>
+
+    <ul class="waiting-room__tips">
+      @for (tip of tips; track tip.label) {
+        <li>
+          <span>{{ tip.label }}</span>
+          <small>{{ tip.helper }}</small>
+        </li>
+      }
+    </ul>
+
+    <div class="waiting-room__actions">
+      <button type="button" class="waiting-room__button" (click)="handleRefresh()">
+        <i class="pi pi-refresh"></i>
+        {{ refreshLabel }}
+      </button>
+      <p>{{ footerNote }}</p>
+    </div>
+  } @else if (normalizedState === 'checking') {
+    <div class="waiting-room__spinner" aria-hidden="true"></div>
+    <p class="waiting-room__subtitle waiting-room__subtitle--center">
+      Confirmando sua entrada na sala de espera...
+    </p>
+  } @else {
+    <p class="waiting-room__subtitle waiting-room__subtitle--center">
+      Não foi possível conectar à sala de espera. Tente novamente em instantes.
+    </p>
+    <button type="button" class="waiting-room__button" (click)="handleRetry()">
+      <i class="pi pi-refresh"></i>
+      {{ retryLabel }}
+    </button>
+  }
+
+  @if (errorMessage) {
+    <p class="waiting-room__alert">{{ errorMessage }}</p>
+  }
+</section>

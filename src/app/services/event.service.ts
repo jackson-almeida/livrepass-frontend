@@ -8,7 +8,7 @@ import { Event } from '../models/event.model';
 })
 export class EventService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:3000/api/events';
+  private apiUrl = 'http://192.168.1.69:3000/api/events';
 
   getEvents(): Observable<Event[]> {
     return this.http.get<Event[]>(this.apiUrl);

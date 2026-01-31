@@ -5,6 +5,8 @@ import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { PurchaseService } from '../../services/purchase.service';
+import { WaitingRoomCardComponent } from '../../components/waiting-room-card/waiting-room-card';
+import { QueueAccessStore } from '../../services/queue-access.store';
 
 interface BatchCategory {
   id: number;
@@ -50,7 +52,7 @@ interface EventDetail {
 
 @Component({
   selector: 'app-compra',
-  imports: [CommonModule, CardModule, ButtonModule],
+  imports: [CommonModule, CardModule, ButtonModule, WaitingRoomCardComponent],
   templateUrl: './compra.html',
   styleUrl: './compra.scss'
 })
@@ -59,16 +61,21 @@ export class CompraComponent implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
   private purchaseService = inject(PurchaseService);
+  private queueAccessStore = inject(QueueAccessStore);
 
   event = signal<EventDetail | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
 
   categorySelections = signal<Record<number, number>>({});
+  queueState = this.queueAccessStore.state;
+  queuePosition = this.queueAccessStore.position;
+  queueErrorMessage = this.queueAccessStore.errorMessage;
 
   eventId: string | null = null;
 
   ngOnInit() {
+    this.queueAccessStore.connect();
     this.eventId = this.route.snapshot.paramMap.get('id');
     if (this.eventId) {
       this.loadEventDetails();
@@ -82,7 +89,7 @@ export class CompraComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.http.get<EventDetail>(`http://localhost:3000/api/events/${this.eventId}`)
+    this.http.get<EventDetail>(`http://192.168.1.69:3000/api/events/${this.eventId}`)
       .subscribe({
         next: (data) => {
           this.event.set(data);
@@ -199,7 +206,7 @@ export class CompraComponent implements OnInit {
   }
 
   podeComprar(): boolean {
-    return this.getTotalIngressos() > 0;
+    return this.queueState() === 'allowed' && this.getTotalIngressos() > 0;
   }
 
   finalizar() {
@@ -246,5 +253,13 @@ export class CompraComponent implements OnInit {
 
   voltar() {
     this.router.navigate(['/ingressos']);
+  }
+
+  retryQueueAccess(): void {
+    this.queueAccessStore.retry();
+  }
+
+  forceQueueRefresh(): void {
+    this.queueAccessStore.refresh();
   }
 }

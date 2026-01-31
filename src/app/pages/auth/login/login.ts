@@ -11,9 +11,9 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
   selector: 'app-login',
   imports: [
     RouterLink,
-    ButtonModule, 
-    InputTextModule, 
-    PasswordModule, 
+    ButtonModule,
+    InputTextModule,
+    PasswordModule,
     CardModule,
     ReactiveFormsModule
   ],
@@ -65,15 +65,15 @@ export class LoginComponent {
         updatedAt: string;
       };
       token: string;
-    }>('http://localhost:3000/api/auth/login', payload)
+    }>('http://192.168.1.69:3000/api/auth/login', payload)
       .subscribe({
         next: (response) => {
           // Store token in localStorage
           localStorage.setItem('token', response.token);
           localStorage.setItem('user', JSON.stringify(response.user));
-          
+
           this.loading.set(false);
-          
+
           // Navigate to events page
           this.router.navigate(['/ingressos']);
         },

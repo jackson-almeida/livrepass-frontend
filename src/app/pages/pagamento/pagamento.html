@@ -110,39 +110,51 @@
     </p-card>
   }
 
-  <!-- Seleção de forma de pagamento -->
-  @if (showSelection) {
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Cartão -->
-      <p-card class="cursor-pointer hover:shadow-lg transition-shadow">
-        <div
-          (click)="selectPaymentMethod('card')"
-          class="text-center space-y-4 p-6"
-        >
-          <div class="flex justify-center">
-            <i class="pi pi-credit-card text-6xl text-primary-600 dark:text-primary-400"></i>
-          </div>
-          <h3 class="text-xl font-semibold dark:text-gray-100">Cartão de Crédito/Débito</h3>
-          <p class="text-gray-600 dark:text-gray-400">Pague com seu cartão de forma segura</p>
-        </div>
-      </p-card>
-
-      <!-- PIX -->
-      <p-card class="cursor-pointer hover:shadow-lg transition-shadow">
-        <div
-          (click)="selectPaymentMethod('pix')"
-          class="text-center space-y-4 p-6"
-        >
-          <div class="flex justify-center">
-            <i class="pi pi-qrcode text-6xl text-primary-600 dark:text-primary-400"></i>
-          </div>
-          <h3 class="text-xl font-semibold dark:text-gray-100">PIX</h3>
-          <p class="text-gray-600 dark:text-gray-400">Pagamento instantâneo via PIX</p>
-        </div>
-      </p-card>
-    </div>
+  @if (queueState() !== 'allowed') {
+    <app-waiting-room-card
+      [state]="queueState()"
+      [position]="queuePosition()"
+      [errorMessage]="queueErrorMessage()"
+      subtitle="Assim que sua vez chegar liberaremos automaticamente as opções de pagamento."
+      footerNote="Seus ingressos ficam reservados enquanto você permanece aqui."
+      (refresh)="forceQueueRefresh()"
+      (retry)="retryQueueAccess()"
+    />
   } @else {
-    <!-- Outlet para formulário de cartão ou PIX -->
-    <router-outlet />
+    <!-- Seleção de forma de pagamento -->
+    @if (showSelection) {
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Cartão -->
+        <p-card class="cursor-pointer hover:shadow-lg transition-shadow">
+          <div
+            (click)="selectPaymentMethod('card')"
+            class="text-center space-y-4 p-6"
+          >
+            <div class="flex justify-center">
+              <i class="pi pi-credit-card text-6xl text-primary-600 dark:text-primary-400"></i>
+            </div>
+            <h3 class="text-xl font-semibold dark:text-gray-100">Cartão de Crédito/Débito</h3>
+            <p class="text-gray-600 dark:text-gray-400">Pague com seu cartão de forma segura</p>
+          </div>
+        </p-card>
+
+        <!-- PIX -->
+        <p-card class="cursor-pointer hover:shadow-lg transition-shadow">
+          <div
+            (click)="selectPaymentMethod('pix')"
+            class="text-center space-y-4 p-6"
+          >
+            <div class="flex justify-center">
+              <i class="pi pi-qrcode text-6xl text-primary-600 dark:text-primary-400"></i>
+            </div>
+            <h3 class="text-xl font-semibold dark:text-gray-100">PIX</h3>
+            <p class="text-gray-600 dark:text-gray-400">Pagamento instantâneo via PIX</p>
+          </div>
+        </p-card>
+      </div>
+    } @else {
+      <!-- Outlet para formulário de cartão ou PIX -->
+      <router-outlet />
+    }
   }
 </div>
