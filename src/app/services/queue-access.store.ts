@@ -3,15 +3,18 @@ import { Subscription, catchError, interval, of, startWith, switchMap } from 'rx
 import { QueueService, QueueStatusResponse } from './queue.service';
 
 export type QueueAccessState = 'idle' | 'checking' | 'allowed' | 'waiting' | 'error';
+type HeartbeatMode = 'queue' | 'hold';
 
 @Injectable({ providedIn: 'root' })
 export class QueueAccessStore {
   private readonly heartbeatInterval = 15000;
+  private readonly holdHeartbeatInterval = 7500;
   private readonly queueStatusInterval = 5000;
 
   private queueAccessSub?: Subscription;
   private heartbeatSub?: Subscription;
   private queueMonitorSub?: Subscription;
+  private heartbeatMode: HeartbeatMode | null = null;
 
   readonly state = signal<QueueAccessState>('idle');
   readonly position = signal<number | null>(null);
@@ -23,6 +26,7 @@ export class QueueAccessStore {
     const currentState = this.state();
 
     if (currentState === 'allowed') {
+      this.startHeartbeat(false, 'hold');
       return;
     }
 
@@ -82,7 +86,8 @@ export class QueueAccessStore {
       this.state.set('allowed');
       this.position.set(null);
       this.errorMessage.set(null);
-      this.stopTracking();
+      this.stopQueueMonitoring();
+      this.startHeartbeat(true, 'hold');
       return;
     }
 
@@ -93,8 +98,8 @@ export class QueueAccessStore {
     this.startQueuePolling(fromAccess);
   }
 
-  private startHeartbeat(force = false): void {
-    if (this.heartbeatSub && !force) {
+  private startHeartbeat(force = false, mode: HeartbeatMode = 'queue'): void {
+    if (this.heartbeatSub && this.heartbeatMode === mode && !force) {
       return;
     }
 
@@ -102,12 +107,20 @@ export class QueueAccessStore {
       this.heartbeatSub.unsubscribe();
     }
 
-    this.heartbeatSub = interval(this.heartbeatInterval)
+    const intervalMs = mode === 'hold' ? this.holdHeartbeatInterval : this.heartbeatInterval;
+    this.heartbeatMode = mode;
+
+    this.heartbeatSub = interval(intervalMs)
       .pipe(
         startWith(0),
         switchMap(() =>
           this.queueService.sendHeartbeat().pipe(
-            catchError(() => of(null)),
+            catchError(() => {
+              if (mode === 'hold') {
+                this.errorMessage.set('Oscilação detectada, mantendo sua vaga na compra.');
+              }
+              return of(null);
+            }),
           ),
         ),
       )
@@ -152,8 +165,17 @@ export class QueueAccessStore {
   }
 
   private stopTracking(): void {
+    this.stopHeartbeat();
+    this.stopQueueMonitoring();
+  }
+
+  private stopHeartbeat(): void {
     this.heartbeatSub?.unsubscribe();
     this.heartbeatSub = undefined;
+    this.heartbeatMode = null;
+  }
+
+  private stopQueueMonitoring(): void {
     this.queueMonitorSub?.unsubscribe();
     this.queueMonitorSub = undefined;
   }
