@@ -1,0 +1,25 @@
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Instala dependências do sistema
+RUN apk add --no-cache git
+
+# Copia arquivos de dependências
+COPY package*.json ./
+
+# Copia o diretório scripts antes de instalar (necessário para postinstall)
+COPY scripts/ ./scripts/
+
+# Instala todas as dependências
+RUN npm install
+
+# Copia o resto do código fonte
+COPY . .
+
+# Expõe a porta do frontend
+EXPOSE 4300
+
+# Comando para desenvolvimento com hot reload
+# O prestart2 garante que o script generate-env.mjs seja executado antes do start2
+CMD ["npm", "run", "start2"]
