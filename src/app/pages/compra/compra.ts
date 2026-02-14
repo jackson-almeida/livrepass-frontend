@@ -89,7 +89,7 @@ export class CompraComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.http.get<EventDetail>(`http://192.168.1.69:3000/api/events/${this.eventId}`)
+    this.http.get<EventDetail>(`http://localhost:3000/api/events/${this.eventId}`)
       .subscribe({
         next: (data) => {
           this.event.set(data);
@@ -221,12 +221,12 @@ export class CompraComponent implements OnInit {
       .map((category) => {
         const price = parseFloat(category.price);
         return {
-        categoryId: category.id,
-        label: category.label,
-        type: category.type,
+          categoryId: category.id,
+          label: category.label,
+          type: category.type,
           unitPrice: isNaN(price) ? 0 : price,
-        quantity: this.getQuantidadeCategoria(category.id),
-        maxPerPurchase: category.maxPerPurchase,
+          quantity: this.getQuantidadeCategoria(category.id),
+          maxPerPurchase: category.maxPerPurchase,
         };
       })
       .filter((item) => item.quantity > 0);

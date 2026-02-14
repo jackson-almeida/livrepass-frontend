@@ -65,7 +65,7 @@ export class LoginComponent {
         updatedAt: string;
       };
       token: string;
-    }>('http://192.168.1.69:3000/api/auth/login', payload)
+    }>('http://localhost:3000/api/auth/login', payload)
       .subscribe({
         next: (response) => {
           // Store token in localStorage
