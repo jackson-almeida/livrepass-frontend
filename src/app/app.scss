@@ -1,0 +1,129 @@
+/* ===== Global Animations ===== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.animate-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.slide-in-from-top {
+    animation: slideInFromTop 0.2s ease-out;
+}
+
+/* ===== Smooth transitions for interactive elements ===== */
+button,
+a,
+.p-button {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ===== Touch targets for mobile (min 44px) ===== */
+@media (max-width: 640px) {
+
+    button,
+    .p-button,
+    a[role="button"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d4d4d8;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a1a1aa;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #3f3f46;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #52525b;
+}
+
+/* ===== Card Styles ===== */
+p-card {
+    .p-card {
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+}
+
+/* ===== Focus States ===== */
+*:focus-visible {
+    outline: 2px solid theme('colors.primary.500');
+    outline-offset: 2px;
+}
+
+.dark *:focus-visible {
+    outline-color: theme('colors.primary.400');
+}
+
+/* ===== Skeleton / Shimmer loader ===== */
+.skeleton {
+    background: linear-gradient(90deg,
+            #e4e4e7 25%,
+            #f4f4f5 50%,
+            #e4e4e7 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    border-radius: 0.5rem;
+}
+
+.dark .skeleton {
+    background: linear-gradient(90deg,
+            #27272a 25%,
+            #3f3f46 50%,
+            #27272a 75%);
+    background-size: 200% 100%;
+}
+
+/* ===== Page transitions ===== */
+router-outlet+* {
+    animation: fadeIn 0.25s ease-out;
+}

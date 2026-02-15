@@ -1,5 +1,5 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withViewTransitions } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { providePrimeNG } from 'primeng/config';
@@ -8,7 +8,7 @@ import { definePreset } from '@primeng/themes';
 
 import { routes } from './app.routes';
 
-const CustomPreset = definePreset(Aura, {
+const BoraliPreset = definePreset(Aura, {
   semantic: {
     primary: {
       50: '{purple.50}',
@@ -33,39 +33,39 @@ const CustomPreset = definePreset(Aura, {
         },
         surface: {
           0: '#ffffff',
-          50: '{slate.50}',
-          100: '{slate.100}',
-          200: '{slate.200}',
-          300: '{slate.300}',
-          400: '{slate.400}',
-          500: '{slate.500}',
-          600: '{slate.600}',
-          700: '{slate.700}',
-          800: '{slate.800}',
-          900: '{slate.900}',
-          950: '{slate.950}'
+          50: '{zinc.50}',
+          100: '{zinc.100}',
+          200: '{zinc.200}',
+          300: '{zinc.300}',
+          400: '{zinc.400}',
+          500: '{zinc.500}',
+          600: '{zinc.600}',
+          700: '{zinc.700}',
+          800: '{zinc.800}',
+          900: '{zinc.900}',
+          950: '{zinc.950}'
         }
       },
       dark: {
         primary: {
-          color: '{purple.500}',
-          contrastColor: '#ffffff',
-          hoverColor: '{purple.400}',
-          activeColor: '{purple.300}'
+          color: '{purple.400}',
+          contrastColor: '#09090b',
+          hoverColor: '{purple.300}',
+          activeColor: '{purple.200}'
         },
         surface: {
-          0: '#0a0a0a',
-          50: '#1a1a1a',
-          100: '#2a2a2a',
-          200: '#3a3a3a',
-          300: '#4a4a4a',
-          400: '#5a5a5a',
-          500: '#6a6a6a',
-          600: '#7a7a7a',
-          700: '#8a8a8a',
-          800: '#9a9a9a',
-          900: '#aaaaaa',
-          950: '#bbbbbb'
+          0: '#09090b',
+          50: '#18181b',
+          100: '#27272a',
+          200: '#3f3f46',
+          300: '#52525b',
+          400: '#71717a',
+          500: '#a1a1aa',
+          600: '#d4d4d8',
+          700: '#e4e4e7',
+          800: '#f4f4f5',
+          900: '#fafafa',
+          950: '#ffffff'
         }
       }
     }
@@ -76,12 +76,12 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    provideRouter(routes),
+    provideRouter(routes, withViewTransitions()),
     provideAnimationsAsync(),
     provideHttpClient(withFetch()),
     providePrimeNG({
       theme: {
-        preset: CustomPreset,
+        preset: BoraliPreset,
         options: {
           darkModeSelector: '.dark'
         }
