@@ -50,11 +50,16 @@
     color: #fafafa;
   }
 
-  p-card h2, p-card h3, p-card h4 {
+  p-card h2,
+  p-card h3,
+  p-card h4 {
     color: #fafafa;
   }
 
-  p-card p, p-card span, p-card label, p-card div {
+  p-card p,
+  p-card span,
+  p-card label,
+  p-card div {
     color: #a1a1aa;
   }
 
@@ -104,11 +109,21 @@
     border-radius: 0.75rem;
   }
 
-  .p-select-option { color: #fafafa; }
-  .p-select-option:hover { background: #27272a; }
-  .p-select-option.p-focus { background: #3f3f46; }
+  .p-select-option {
+    color: #fafafa;
+  }
 
-  label { color: #a1a1aa; }
+  .p-select-option:hover {
+    background: #27272a;
+  }
+
+  .p-select-option.p-focus {
+    background: #3f3f46;
+  }
+
+  label {
+    color: #a1a1aa;
+  }
 
   .p-password-overlay {
     background: #18181b;
@@ -116,7 +131,9 @@
     color: #fafafa;
   }
 
-  p-card .pi { color: #c084fc; }
+  p-card .pi {
+    color: #c084fc;
+  }
 }
 
 /* ===== PrimeNG Light Overrides ===== */
@@ -141,12 +158,26 @@
     color: #09090b;
   }
 
-  p-card h2, p-card h3, p-card h4 { color: #09090b; }
+  p-card h2,
+  p-card h3,
+  p-card h4 {
+    color: #09090b;
+  }
 
-  p-card p, p-card span, p-card label, p-card div { color: #71717a; }
+  p-card p,
+  p-card span,
+  p-card label,
+  p-card div {
+    color: #71717a;
+  }
 
-  p-card a { color: #9333ea; }
-  p-card a:hover { color: #7e22ce; }
+  p-card a {
+    color: #9333ea;
+  }
+
+  p-card a:hover {
+    color: #7e22ce;
+  }
 
   .p-inputtext,
   .p-inputmask,

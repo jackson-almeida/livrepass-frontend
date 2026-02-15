@@ -50,8 +50,7 @@ export class AuthService {
     }
 
     /**
-     * Redirects to login if not authenticated, passing the returnUrl.
-     * Returns true if authenticated, false otherwise.
+     * Redireciona para o login se não estiver autenticado, passando o returnUrl.
      */
     requireAuth(returnUrl?: string): boolean {
         if (this.isLoggedIn()) {

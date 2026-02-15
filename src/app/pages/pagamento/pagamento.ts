@@ -40,7 +40,6 @@ export class PagamentoComponent implements OnInit, OnDestroy {
   private routerEventsSub?: Subscription;
 
   ngOnInit() {
-    // If no reservation, try to load from server
     if (!this.reservation()) {
       this.cartReservationService.loadActiveCart().then((cart) => {
         if (!cart) {
