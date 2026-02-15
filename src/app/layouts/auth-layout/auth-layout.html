@@ -1,5 +1,20 @@
-<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-dark-bg dark:to-dark-surface transition-colors duration-300">
-  <div class="w-full max-w-md p-6">
+<div class="min-h-screen flex flex-col items-center justify-center bg-dark-bg relative overflow-hidden px-4 py-8">
+  <!-- Efeito de trasnsisçao no fundo -->
+  <div class="absolute inset-0 pointer-events-none">
+    <div
+      class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary-600/20 rounded-full blur-[120px]">
+    </div>
+    <div class="absolute bottom-0 right-0 w-[400px] h-[400px] bg-accent-500/10 rounded-full blur-[100px]"></div>
+    <div class="absolute top-1/2 left-0 w-[300px] h-[300px] bg-neon-blue/10 rounded-full blur-[80px]"></div>
+  </div>
+
+  <!-- Logo -->
+  <div class="relative z-10 mb-8 text-center">
+    <img src="/images/logo_completa.png" alt="Borali" class="h-16 mx-auto mb-4 object-contain" />
+  </div>
+
+  <!-- Content -->
+  <div class="relative z-10 w-full max-w-md">
     <router-outlet />
   </div>
 </div>
