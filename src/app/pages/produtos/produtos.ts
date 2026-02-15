@@ -2,12 +2,11 @@ import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { Product, ProductAvailability, ProductSelection, ProductVariation } from '../../models/product.model';
 import { ProductService } from '../../services/product.service';
 import { ProductSelectionService } from '../../services/product-selection.service';
+import { CartItemComponent } from '../../components/cart-item/cart-item';
 
 interface ProductAvailabilityCard {
   key: string;
@@ -24,10 +23,9 @@ interface ProductAvailabilityCard {
     CommonModule,
     FormsModule,
     RouterLink,
-    CardModule,
-    ButtonModule,
     InputNumberModule,
     CurrencyPipe,
+    CartItemComponent,
   ],
   templateUrl: './produtos.html',
   styleUrl: './produtos.scss',

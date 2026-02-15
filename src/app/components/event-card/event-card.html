@@ -1,0 +1,82 @@
+<div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border shadow-card hover:shadow-card-hover transition-all duration-300 cursor-pointer"
+    (click)="onBuyClick()">
+    <!-- Image -->
+    <div class="relative aspect-[16/10] overflow-hidden">
+        <img [alt]="event.name" [src]="getEventImage()"
+            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+        <!-- Gradient Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+
+        <!-- Badge -->
+        @if (!hasActiveBatch()) {
+        <div class="absolute top-3 right-3">
+            <span
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent-500/90 backdrop-blur-sm text-white text-xs font-bold uppercase tracking-wide">
+                <i class="pi pi-clock text-[10px]"></i>
+                Em breve
+            </span>
+        </div>
+        } @else {
+        <div class="absolute top-3 right-3">
+            <span
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-bold uppercase tracking-wide">
+                <i class="pi pi-check-circle text-[10px]"></i>
+                Disponível
+            </span>
+        </div>
+        }
+
+        <!-- Bottom info on image -->
+        <div class="absolute bottom-0 left-0 right-0 p-4">
+            <h3 class="text-white font-bold text-lg leading-tight line-clamp-2 drop-shadow-lg">
+                {{ event.name }}
+            </h3>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="p-4 space-y-3">
+        <div class="flex items-center gap-2 text-sm text-light-text-secondary dark:text-dark-text-secondary">
+            <div class="flex items-center justify-center w-7 h-7 rounded-lg bg-primary-50 dark:bg-primary-900/20">
+                <i class="pi pi-map-marker text-primary-500 text-xs"></i>
+            </div>
+            <span class="line-clamp-1">{{ event.location }}</span>
+        </div>
+
+        <div class="flex items-center gap-2 text-sm text-light-text-secondary dark:text-dark-text-secondary">
+            <div class="flex items-center justify-center w-7 h-7 rounded-lg bg-accent-50 dark:bg-accent-900/20">
+                <i class="pi pi-calendar text-accent-500 text-xs"></i>
+            </div>
+            <span>{{ event.startDate | date:'dd MMM yyyy · HH:mm' }}</span>
+        </div>
+
+        @if (event.description) {
+        <p class="text-xs text-light-text-tertiary dark:text-dark-text-tertiary line-clamp-2 leading-relaxed">
+            {{ event.description }}
+        </p>
+        }
+
+        <!-- Action -->
+        <div class="pt-1">
+            @if (hasActiveBatch()) {
+            <button
+                class="w-full py-3 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white font-semibold text-sm transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow-glow"
+                (click)="onBuyClick(); $event.stopPropagation()">
+                <i class="pi pi-ticket mr-2"></i>
+                Comprar ingresso
+            </button>
+            } @else {
+            <div class="text-center py-2 space-y-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-accent-500">
+                    Vendas em breve
+                </span>
+                @if (getNextBatchReleaseDate()) {
+                <p class="text-[11px] text-light-text-tertiary dark:text-dark-text-tertiary">
+                    Abertura: {{ getNextBatchReleaseDate() | date: 'dd/MM/yyyy HH:mm' }}
+                </p>
+                }
+            </div>
+            }
+        </div>
+    </div>
+</div>

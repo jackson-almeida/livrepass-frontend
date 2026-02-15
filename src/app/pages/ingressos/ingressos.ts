@@ -1,14 +1,12 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
 import { EventService } from '../../services/event.service';
 import { Event } from '../../models/event.model';
-import { DatePipe } from '@angular/common';
+import { EventCardComponent } from '../../components/event-card/event-card';
 
 @Component({
   selector: 'app-ingressos',
-  imports: [CardModule, ButtonModule, DatePipe],
+  imports: [EventCardComponent],
   templateUrl: './ingressos.html',
   styleUrl: './ingressos.scss'
 })
@@ -41,17 +39,5 @@ export class IngressosComponent implements OnInit {
 
   comprar(event: Event) {
     this.router.navigate(['/compra', event.id]);
-  }
-
-  hasActiveBatch(event: Event): boolean {
-    if (typeof event.hasActiveBatch === 'boolean') {
-      return event.hasActiveBatch;
-    }
-
-    return Boolean(event.activeBatch);
-  }
-
-  getNextBatchReleaseDate(event: Event): string | null {
-    return event.nextBatchReleaseDate ?? event.nextBatch?.releaseDate ?? null;
   }
 }
