@@ -1,10 +1,8 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { CommonModule } from '@angular/common';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
-import { PurchaseService } from '../../services/purchase.service';
+import { CommonModule, DatePipe } from '@angular/common';
+import { CartReservationService } from '../../services/cart-reservation.service';
 import { WaitingRoomCardComponent } from '../../components/waiting-room-card/waiting-room-card';
 import { QueueAccessStore } from '../../services/queue-access.store';
 
@@ -52,7 +50,7 @@ interface EventDetail {
 
 @Component({
   selector: 'app-compra',
-  imports: [CommonModule, CardModule, ButtonModule, WaitingRoomCardComponent],
+  imports: [CommonModule, DatePipe, WaitingRoomCardComponent],
   templateUrl: './compra.html',
   styleUrl: './compra.scss'
 })
@@ -60,12 +58,13 @@ export class CompraComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
   private router = inject(Router);
-  private purchaseService = inject(PurchaseService);
+  private cartReservationService = inject(CartReservationService);
   private queueAccessStore = inject(QueueAccessStore);
 
   event = signal<EventDetail | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
+  reserving = signal(false);
 
   categorySelections = signal<Record<number, number>>({});
   queueState = this.queueAccessStore.state;
@@ -73,6 +72,8 @@ export class CompraComponent implements OnInit {
   queueErrorMessage = this.queueAccessStore.errorMessage;
 
   eventId: string | null = null;
+
+  private readonly DEFAULT_EVENT_IMAGE = '/images/default-event-banner.png';
 
   ngOnInit() {
     this.queueAccessStore.connect();
@@ -197,7 +198,10 @@ export class CompraComponent implements OnInit {
   }
 
   getTotalIngressos(): number {
-    return Object.values(this.categorySelections()).reduce((sum, quantity) => sum + quantity, 0);
+    return Object.values(this.categorySelections()).reduce((sum: number, quantity: unknown) => {
+      const qty = typeof quantity === 'number' ? quantity : 0;
+      return sum + qty;
+    }, 0);
   }
 
   hasActiveBatch(): boolean {
@@ -205,11 +209,16 @@ export class CompraComponent implements OnInit {
     return !!(event && event.activeBatch && event.activeBatch.categories?.length);
   }
 
-  podeComprar(): boolean {
-    return this.queueState() === 'allowed' && this.getTotalIngressos() > 0;
+  getEventImage(): string {
+    const event = this.event();
+    return event?.bannerUrl || this.DEFAULT_EVENT_IMAGE;
   }
 
-  finalizar() {
+  podeComprar(): boolean {
+    return this.queueState() === 'allowed' && this.getTotalIngressos() > 0 && !this.reserving();
+  }
+
+  async finalizar() {
     if (!this.podeComprar()) {
       return;
     }
@@ -217,38 +226,34 @@ export class CompraComponent implements OnInit {
     const event = this.event();
     if (!event || !this.eventId || !event.activeBatch) return;
 
-    const categoriasSelecionadas = this.getActiveCategories()
-      .map((category) => {
-        const price = parseFloat(category.price);
-        return {
-          categoryId: category.id,
-          label: category.label,
-          type: category.type,
-          unitPrice: isNaN(price) ? 0 : price,
-          quantity: this.getQuantidadeCategoria(category.id),
-          maxPerPurchase: category.maxPerPurchase,
-        };
-      })
+    const items = this.getActiveCategories()
+      .map((category) => ({
+        categoryId: category.id,
+        quantity: this.getQuantidadeCategoria(category.id),
+      }))
       .filter((item) => item.quantity > 0);
 
-    if (!categoriasSelecionadas.length) {
+    if (!items.length) {
       return;
     }
 
-    // Salvar dados da compra no localStorage
-    this.purchaseService.savePurchase({
-      eventId: this.eventId,
-      eventName: event.name,
-      batchId: event.activeBatch.id,
-      batchName: event.activeBatch.name,
-      categories: categoriasSelecionadas,
-      totalTickets: this.getTotalIngressos(),
-      total: this.calcularTotal(),
-      timestamp: Date.now()
-    });
+    this.reserving.set(true);
+    this.error.set(null);
 
-    // Redirecionar para página de pagamento
-    this.router.navigate(['/pagamento']);
+    try {
+      await this.cartReservationService.createReservation({
+        eventId: Number(this.eventId),
+        batchId: event.activeBatch.id,
+        items,
+      });
+
+      // Redirect to cart page with timer and participant form
+      this.router.navigate(['/carrinho']);
+    } catch (err: any) {
+      this.error.set(typeof err === 'string' ? err : 'Erro ao reservar ingressos. Tente novamente.');
+    } finally {
+      this.reserving.set(false);
+    }
   }
 
   voltar() {

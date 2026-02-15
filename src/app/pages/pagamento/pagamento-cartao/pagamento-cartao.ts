@@ -1,10 +1,18 @@
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { Component, OnDestroy, OnInit, AfterViewInit, inject, signal, ElementRef, NgZone, computed } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  AfterViewInit,
+  inject,
+  signal,
+  ElementRef,
+  NgZone,
+  computed,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { interval, startWith, switchMap, Subscription, firstValueFrom } from 'rxjs';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { PurchaseService, PurchaseData } from '../../../services/purchase.service';
@@ -13,18 +21,18 @@ import {
   PaymentCustomerPayload,
   PaymentService,
   PaymentStatus,
+  PaymentSummaryResponse,
 } from '../../../services/payment.service';
 import { MercadoPagoService } from '../../../services/mercadopago.service';
 import { ProductSelectionService } from '../../../services/product-selection.service';
 import { ProductPurchaseCustomer, ProductSaleReference } from '../../../models/product.model';
+import { CartReservationService, CartReservationItem } from '../../../services/cart-reservation.service';
 
 @Component({
   selector: 'app-pagamento-cartao',
   imports: [
     CommonModule,
     CurrencyPipe,
-    CardModule,
-    ButtonModule,
     InputTextModule,
     SelectModule,
     ReactiveFormsModule,
@@ -38,6 +46,7 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
   private paymentService = inject(PaymentService);
   private mercadoPagoService = inject(MercadoPagoService);
   private productSelectionService = inject(ProductSelectionService);
+  private cartReservationService = inject(CartReservationService);
   private fb = inject(FormBuilder);
   private hostElement = inject(ElementRef<HTMLElement>);
   private ngZone = inject(NgZone);
@@ -51,6 +60,10 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
   cardFieldsReady = signal(false);
   productsTotal = computed(() => this.productSelectionService.getTotalAmount());
   totalToPay = computed(() => (this.purchaseData()?.total ?? 0) + this.productsTotal());
+
+  // Timer from cart reservation
+  remainingFormatted = this.cartReservationService.remainingFormatted;
+  isExpired = this.cartReservationService.isExpired;
 
   private pollingSub?: Subscription;
 
@@ -76,14 +89,44 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
     phoneNumber: [''],
   });
 
-  installmentsOptions = Array.from({ length: 12 }, (_, i) => ({ label: `${i + 1}x`, value: i + 1 }));
+  installmentsOptions = Array.from({ length: 12 }, (_, i) => ({
+    label: `${i + 1}x`,
+    value: i + 1,
+  }));
 
   ngOnInit() {
     const purchase = this.purchaseService.getPurchase();
     if (!purchase) {
-      this.router.navigate(['/ingressos']);
+      // Try to build purchase data from reservation
+      const reservation = this.cartReservationService.reservation();
+      if (!reservation) {
+        this.router.navigate(['/ingressos']);
+        return;
+      }
+      // Build a PurchaseData-like object from reservation
+      const fakePurchase: PurchaseData = {
+        eventId: String(reservation.eventId),
+        eventName: reservation.eventName,
+        batchId: reservation.items[0]?.batchId ?? 0,
+        batchName: reservation.items[0]?.batchName ?? '',
+        categories: reservation.items.map((item: CartReservationItem) => ({
+          categoryId: item.categoryId,
+          label: item.label,
+          type: item.categoryType,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+          maxPerPurchase: item.maxPerPurchase,
+        })),
+        totalTickets: reservation.totalTickets,
+        total: parseFloat(reservation.totalAmount),
+        timestamp: Date.now(),
+      };
+      this.purchaseData.set(fakePurchase);
+      // Save to localStorage for compatibility
+      this.purchaseService.savePurchase(fakePurchase);
       return;
     }
+
     this.purchaseData.set(purchase);
   }
 
@@ -103,6 +146,11 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
   async finalizarPagamento() {
     const purchase = this.purchaseData();
     if (!purchase) {
+      return;
+    }
+
+    if (this.isExpired()) {
+      this.errorMessage.set('Tempo de reserva expirado. Selecione os ingressos novamente.');
       return;
     }
 
@@ -126,7 +174,7 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
       const productCustomer = this.buildProductPurchaseCustomer();
       const productSales = await this.prepareProductSales(productCustomer);
 
-      const response = await firstValueFrom(
+      const response: CardPaymentResponse = await firstValueFrom(
         this.paymentService.createCardPayment(
           purchase,
           customer,
@@ -136,7 +184,10 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
             installments: this.cardForm.value.installments!,
             holderName: cardholderName,
           },
-          { description: `Ingressos para ${purchase.eventName}`, productSales },
+          {
+            description: `Ingressos para ${purchase.eventName}`,
+            productSales,
+          },
         ),
       );
 
@@ -150,7 +201,8 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
       }
     } catch (error) {
       const message =
-        (error as { message?: string })?.message || 'Não foi possível processar o pagamento.';
+        (error as { message?: string })?.message ||
+        'Não foi possível processar o pagamento.';
       console.error('Falha ao finalizar pagamento', error);
       this.errorMessage.set(message);
     } finally {
@@ -165,7 +217,9 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     try {
-      const status = await firstValueFrom(this.paymentService.getPaymentStatus(result.purchaseId));
+      const status: PaymentSummaryResponse = await firstValueFrom(
+        this.paymentService.getPaymentStatus(result.purchaseId),
+      );
       this.applyStatusFeedback(status.status, status.statusDetail);
       if (!this.isPending(status.status)) {
         this.stopPolling();
@@ -199,6 +253,8 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
     }
   }
 
+  // ─── Private helpers ──────────────────────────────────────────
+
   private buildCustomerPayload(): PaymentCustomerPayload {
     const value = this.customerForm.value;
     return {
@@ -216,19 +272,26 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
     const value = this.customerForm.value;
     const firstName = value.firstName?.trim() || '';
     const lastName = value.lastName?.trim() || '';
-    const fullName = `${firstName} ${lastName}`.trim() || firstName || lastName || 'Cliente';
+    const fullName =
+      `${firstName} ${lastName}`.trim() || firstName || lastName || 'Cliente';
     const documentNumber = value.documentNumber?.replace(/\D/g, '') || '';
-    const phone = this.buildInternationalPhone(value.phoneAreaCode, value.phoneNumber);
+    const phoneNumber = this.buildInternationalPhone(
+      value.phoneAreaCode,
+      value.phoneNumber,
+    );
 
     return {
       fullName,
       email: value.email!,
       documentNumber,
-      phoneNumber: phone,
+      phoneNumber,
     };
   }
 
-  private buildInternationalPhone(areaCode?: string | null, phone?: string | null): string | undefined {
+  private buildInternationalPhone(
+    areaCode?: string | null,
+    phone?: string | null,
+  ): string | undefined {
     const area = areaCode?.replace(/\D/g, '');
     const number = phone?.replace(/\D/g, '');
     if (!area || !number) {
@@ -237,7 +300,9 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
     return `+55 ${area} ${number}`;
   }
 
-  private async prepareProductSales(customer: ProductPurchaseCustomer): Promise<ProductSaleReference[]> {
+  private async prepareProductSales(
+    customer: ProductPurchaseCustomer,
+  ): Promise<ProductSaleReference[]> {
     if (!this.productSelectionService.hasSelections()) {
       return [];
     }
@@ -251,7 +316,10 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
     const token = await this.mercadoPagoService.createCardToken({
       cardholderName: value.cardholderName!.trim(),
       identificationType: 'CPF',
-      identificationNumber: this.customerForm.value.documentNumber!.replace(/\D/g, ''),
+      identificationNumber: this.customerForm.value.documentNumber!.replace(
+        /\D/g,
+        '',
+      ),
     });
 
     if (!token?.id) {
@@ -267,12 +335,16 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
     try {
       await this.mercadoPagoService.mountCardFields({
         cardNumberContainerId: this.ensureFieldElement('card-number-field'),
-        expirationDateContainerId: this.ensureFieldElement('card-expiration-field'),
+        expirationDateContainerId: this.ensureFieldElement(
+          'card-expiration-field',
+        ),
         securityCodeContainerId: this.ensureFieldElement('card-security-field'),
       });
       this.cardFieldsReady.set(true);
     } catch (error) {
-      const message = (error as { message?: string })?.message || 'Não foi possível inicializar os campos do cartão.';
+      const message =
+        (error as { message?: string })?.message ||
+        'Não foi possível inicializar os campos do cartão.';
       this.errorMessage.set(message);
     }
   }
@@ -291,7 +363,8 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
             this.stopPolling();
           }
         },
-        error: () => this.errorMessage.set('Erro ao verificar status do pagamento.'),
+        error: () =>
+          this.errorMessage.set('Erro ao verificar status do pagamento.'),
       });
   }
 
@@ -305,7 +378,9 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
   private ensureFieldElement(id: string): string {
     const element = this.hostElement.nativeElement.querySelector(`#${id}`);
     if (!element) {
-      throw new Error(`Elemento ${id} não encontrado para montar o campo seguro.`);
+      throw new Error(
+        `Elemento ${id} não encontrado para montar o campo seguro.`,
+      );
     }
     return id;
   }
@@ -315,20 +390,35 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
   }
 
   private isPending(status: PaymentStatus): boolean {
-    return status === 'pending' || status === 'in_process' || status === 'in_mediation';
+    return (
+      status === 'pending' ||
+      status === 'in_process' ||
+      status === 'in_mediation'
+    );
   }
 
   private isRejected(status: PaymentStatus): boolean {
-    return status === 'rejected' || status === 'cancelled' || status === 'refunded' || status === 'charged_back';
+    return (
+      status === 'rejected' ||
+      status === 'cancelled' ||
+      status === 'refunded' ||
+      status === 'charged_back'
+    );
   }
 
-  private applyStatusFeedback(status: PaymentStatus, statusDetail?: string) {
+  private applyStatusFeedback(
+    status: PaymentStatus,
+    statusDetail?: string,
+  ) {
     this.paymentStatus.set(status);
 
     if (this.isApproved(status)) {
       this.errorMessage.set(null);
-      this.successMessage.set('Pagamento aprovado! Seus ingressos serão liberados em instantes.');
+      this.successMessage.set(
+        'Pagamento aprovado! Seus ingressos serão liberados em instantes.',
+      );
       this.productSelectionService.clearSelections();
+      this.cartReservationService.clearState();
       return;
     }
 
@@ -340,30 +430,44 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
 
     if (this.isPending(status)) {
       this.errorMessage.set(null);
-      this.successMessage.set('Pagamento enviado. Estamos aguardando a confirmação.');
+      this.successMessage.set(
+        'Pagamento enviado. Estamos aguardando a confirmação.',
+      );
       return;
     }
 
     this.successMessage.set(null);
-    this.errorMessage.set(`Status do pagamento: ${this.formatStatusLabel(status)}.`);
+    this.errorMessage.set(
+      `Status do pagamento: ${this.formatStatusLabel(status)}.`,
+    );
   }
 
   private getRejectionMessage(statusDetail?: string): string {
     const messages: Record<string, string> = {
-      cc_rejected_other_reason: 'Pagamento rejeitado pelo emissor. Verifique com o banco ou tente outro cartão.',
-      cc_rejected_bad_filled_card_number: 'Pagamento rejeitado. Confira o número do cartão informado.',
-      cc_rejected_bad_filled_security_code: 'Pagamento rejeitado. Confira o código de segurança.',
-      cc_rejected_bad_filled_date: 'Pagamento rejeitado. Verifique a data de validade do cartão.',
-      cc_rejected_insufficient_amount: 'Pagamento rejeitado por saldo/crédito insuficiente.',
-      cc_rejected_call_for_authorize: 'Pagamento rejeitado. Entre em contato com o emissor para liberar a transação.',
-      cc_rejected_bad_filled_other: 'Pagamento rejeitado. Revise os dados do cartão.',
+      cc_rejected_other_reason:
+        'Pagamento rejeitado pelo emissor. Verifique com o banco ou tente outro cartão.',
+      cc_rejected_bad_filled_card_number:
+        'Pagamento rejeitado. Confira o número do cartão informado.',
+      cc_rejected_bad_filled_security_code:
+        'Pagamento rejeitado. Confira o código de segurança.',
+      cc_rejected_bad_filled_date:
+        'Pagamento rejeitado. Verifique a data de validade do cartão.',
+      cc_rejected_insufficient_amount:
+        'Pagamento rejeitado por saldo/crédito insuficiente.',
+      cc_rejected_call_for_authorize:
+        'Pagamento rejeitado. Entre em contato com o emissor para liberar a transação.',
+      cc_rejected_bad_filled_other:
+        'Pagamento rejeitado. Revise os dados do cartão.',
     };
 
     if (!statusDetail) {
       return 'Pagamento rejeitado. Confira os dados do cartão ou tente outro método.';
     }
 
-    return messages[statusDetail] || `Pagamento rejeitado (${statusDetail}). Confira os dados ou tente outro método.`;
+    return (
+      messages[statusDetail] ||
+      `Pagamento rejeitado (${statusDetail}). Confira os dados ou tente outro método.`
+    );
   }
 
   private formatStatusLabel(status: PaymentStatus): string {
