@@ -1,20 +1,17 @@
 import { Component, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
-import { CardModule } from 'primeng/card';
 import { HttpClient } from '@angular/common/http';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { AuthService, AuthUser } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   imports: [
     RouterLink,
-    ButtonModule,
     InputTextModule,
     PasswordModule,
-    CardModule,
     ReactiveFormsModule
   ],
   templateUrl: './login.html',
@@ -25,15 +22,21 @@ export class LoginComponent {
   loading = signal(false);
   error = signal<string | null>(null);
 
+  private returnUrl: string | null = null;
+
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    private authService: AuthService
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
   }
 
   onSubmit() {
@@ -54,28 +57,16 @@ export class LoginComponent {
 
     this.http.post<{
       message: string;
-      user: {
-        id: number;
-        email: string;
-        name: string;
-        phone: string;
-        cpf: string;
-        isActive: boolean;
-        createdAt: string;
-        updatedAt: string;
-      };
+      user: AuthUser;
       token: string;
     }>('http://localhost:3000/api/auth/login', payload)
       .subscribe({
         next: (response) => {
-          // Store token in localStorage
-          localStorage.setItem('token', response.token);
-          localStorage.setItem('user', JSON.stringify(response.user));
-
+          this.authService.setAuth(response.token, response.user);
           this.loading.set(false);
-
-          // Navigate to events page
-          this.router.navigate(['/ingressos']);
+          // Redirect to returnUrl if available, otherwise to /ingressos
+          const redirectTo = this.returnUrl || '/ingressos';
+          this.router.navigateByUrl(redirectTo);
         },
         error: (err) => {
           this.loading.set(false);

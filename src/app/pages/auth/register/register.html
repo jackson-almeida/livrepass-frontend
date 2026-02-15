@@ -1,22 +1,22 @@
-<p-card>
+<div class="rounded-2xl bg-dark-surface border border-dark-border p-6 animate-fade-in">
   <div class="text-center mb-6">
-    <h2 class="text-3xl font-bold text-gray-900 mb-2">Criar conta</h2>
-    <p class="text-gray-600">Preencha os dados abaixo</p>
+    <h2 class="text-2xl font-extrabold text-white">Criar conta</h2>
+    <p class="text-sm text-dark-text-secondary mt-1">Preencha seus dados para começar</p>
   </div>
 
-  <!-- Error Message -->
+  <!-- Error -->
   @if (error()) {
-    <div class="bg-red-50 border border-red-200 p-3 rounded-lg mb-4">
-      <p class="text-red-800 text-sm">{{ error() }}</p>
+    <div class="rounded-xl bg-red-900/20 border border-red-800/50 p-3 mb-4 animate-fade-in">
+      <p class="text-red-300 text-sm flex items-center gap-2">
+        <i class="pi pi-exclamation-triangle text-xs"></i>
+        {{ error() }}
+      </p>
     </div>
   }
 
   <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
-    <!-- Nome Completo -->
     <div>
-      <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-        Nome completo *
-      </label>
+      <label for="name" class="block text-xs font-semibold text-dark-text-secondary mb-1.5">Nome completo</label>
       <input
         type="text"
         id="name"
@@ -27,15 +27,12 @@
         [class.ng-invalid]="registerForm.get('name')?.invalid && registerForm.get('name')?.touched"
       />
       @if (registerForm.get('name')?.invalid && registerForm.get('name')?.touched) {
-        <small class="text-red-600">{{ getErrorMessage('name') }}</small>
+        <small class="text-red-400 text-[11px] mt-1 block">{{ getErrorMessage('name') }}</small>
       }
     </div>
 
-    <!-- Email -->
     <div>
-      <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-        Email *
-      </label>
+      <label for="email" class="block text-xs font-semibold text-dark-text-secondary mb-1.5">Email</label>
       <input
         type="email"
         id="email"
@@ -46,72 +43,62 @@
         [class.ng-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
       />
       @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
-        <small class="text-red-600">{{ getErrorMessage('email') }}</small>
+        <small class="text-red-400 text-[11px] mt-1 block">{{ getErrorMessage('email') }}</small>
       }
     </div>
 
-    <!-- CPF -->
-    <div>
-      <label for="cpf" class="block text-sm font-medium text-gray-700 mb-2">
-        CPF *
-      </label>
-      <p-inputMask
-        id="cpf"
-        formControlName="cpf"
-        mask="999.999.999-99"
-        placeholder="000.000.000-00"
-        styleClass="w-full"
-        [style]="{'width': '100%'}"
-        [class.ng-invalid]="registerForm.get('cpf')?.invalid && registerForm.get('cpf')?.touched"
-      />
-      @if (registerForm.get('cpf')?.invalid && registerForm.get('cpf')?.touched) {
-        <small class="text-red-600">{{ getErrorMessage('cpf') }}</small>
-      }
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label for="cpf" class="block text-xs font-semibold text-dark-text-secondary mb-1.5">CPF</label>
+        <p-inputMask
+          id="cpf"
+          formControlName="cpf"
+          mask="999.999.999-99"
+          placeholder="000.000.000-00"
+          styleClass="w-full"
+          [style]="{'width': '100%'}"
+          [class.ng-invalid]="registerForm.get('cpf')?.invalid && registerForm.get('cpf')?.touched"
+        />
+        @if (registerForm.get('cpf')?.invalid && registerForm.get('cpf')?.touched) {
+          <small class="text-red-400 text-[11px] mt-1 block">{{ getErrorMessage('cpf') }}</small>
+        }
+      </div>
+
+      <div>
+        <label for="phone" class="block text-xs font-semibold text-dark-text-secondary mb-1.5">Telefone</label>
+        <p-inputMask
+          id="phone"
+          formControlName="phone"
+          mask="(99) 99999-9999"
+          placeholder="(00) 00000-0000"
+          styleClass="w-full"
+          [style]="{'width': '100%'}"
+          [class.ng-invalid]="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched"
+        />
+        @if (registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched) {
+          <small class="text-red-400 text-[11px] mt-1 block">{{ getErrorMessage('phone') }}</small>
+        }
+      </div>
     </div>
 
-    <!-- Telefone -->
     <div>
-      <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
-        Telefone *
-      </label>
-      <p-inputMask
-        id="phone"
-        formControlName="phone"
-        mask="(99) 99999-9999"
-        placeholder="(00) 00000-0000"
-        styleClass="w-full"
-        [style]="{'width': '100%'}"
-        [class.ng-invalid]="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched"
-      />
-      @if (registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched) {
-        <small class="text-red-600">{{ getErrorMessage('phone') }}</small>
-      }
-    </div>
-
-    <!-- Senha -->
-    <div>
-      <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-        Senha *
-      </label>
+      <label for="password" class="block text-xs font-semibold text-dark-text-secondary mb-1.5">Senha</label>
       <p-password
         id="password"
         formControlName="password"
         styleClass="w-full"
         [inputStyle]="{'width': '100%'}"
-        placeholder="Digite sua senha (mínimo 6 caracteres)"
+        placeholder="Mínimo 6 caracteres"
         [toggleMask]="true"
         [class.ng-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
       />
       @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
-        <small class="text-red-600">{{ getErrorMessage('password') }}</small>
+        <small class="text-red-400 text-[11px] mt-1 block">{{ getErrorMessage('password') }}</small>
       }
     </div>
 
-    <!-- Confirmar Senha -->
     <div>
-      <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">
-        Confirmar senha *
-      </label>
+      <label for="confirmPassword" class="block text-xs font-semibold text-dark-text-secondary mb-1.5">Confirmar senha</label>
       <p-password
         id="confirmPassword"
         formControlName="confirmPassword"
@@ -119,30 +106,34 @@
         [inputStyle]="{'width': '100%'}"
         [feedback]="false"
         [toggleMask]="true"
-        placeholder="Confirme sua senha"
+        placeholder="Repita sua senha"
         [class.ng-invalid]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched"
       />
       @if (registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched) {
-        <small class="text-red-600">{{ getErrorMessage('confirmPassword') }}</small>
+        <small class="text-red-400 text-[11px] mt-1 block">{{ getErrorMessage('confirmPassword') }}</small>
       }
     </div>
 
-    <p-button
+    <button
       type="submit"
-      label="Cadastrar"
-      styleClass="w-full"
-      [raised]="true"
-      [loading]="loading()"
       [disabled]="loading()"
-    />
+      class="w-full py-3.5 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 text-white font-bold text-sm disabled:opacity-50 hover:shadow-glow transition-all active:scale-[0.98]"
+    >
+      @if (loading()) {
+        <i class="pi pi-spin pi-spinner mr-2"></i>
+        Criando conta...
+      } @else {
+        Cadastrar
+      }
+    </button>
   </form>
 
   <div class="mt-6 text-center">
-    <p class="text-sm text-gray-600">
-      Já tem uma conta?
-      <a routerLink="/auth/login" class="text-indigo-600 hover:text-indigo-500 font-medium">
+    <p class="text-sm text-dark-text-secondary">
+      Já tem conta?
+      <a routerLink="/auth/login" class="text-primary-400 hover:text-primary-300 font-semibold transition-colors">
         Entre
       </a>
     </p>
   </div>
-</p-card>
+</div>

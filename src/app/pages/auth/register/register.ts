@@ -1,16 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
-import { CardModule } from 'primeng/card';
 import { InputMaskModule } from 'primeng/inputmask';
 import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-register',
-  imports: [RouterLink, ButtonModule, InputTextModule, PasswordModule, CardModule, InputMaskModule, ReactiveFormsModule],
+  imports: [RouterLink, InputTextModule, PasswordModule, InputMaskModule, ReactiveFormsModule],
   templateUrl: './register.html',
   styleUrl: './register.scss'
 })
