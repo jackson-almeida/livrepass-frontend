@@ -1,0 +1,81 @@
+<!-- Mobile aqui -->
+<header
+    class="md:hidden sticky top-0 z-40 bg-white/90 dark:bg-dark-surface/90 backdrop-blur-xl border-b border-light-border/50 dark:border-dark-border/50">
+    <div class="flex items-center justify-between h-14 px-4">
+        <a routerLink="/ingressos" class="flex items-center gap-2">
+            <img src="/images/logo_ico.png" alt="Borali" class="w-8 h-8 object-contain" />
+        </a>
+        <div class="flex items-center gap-2">
+            @if (isLoggedIn()) {
+            <span class="text-xs font-medium text-light-text-secondary dark:text-dark-text-secondary">
+                {{ userName() }}
+            </span>
+            }
+        </div>
+    </div>
+</header>
+
+<!-- Desktop-->
+<nav
+    class="hidden md:block bg-white/90 dark:bg-dark-surface/90 backdrop-blur-xl border-b border-light-border/50 dark:border-dark-border/50 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-5 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <!-- Logo -->
+            <a routerLink="/ingressos" class="flex items-center gap-2.5 group">
+                <img src="/images/logo_completa.png" alt="Borali"
+                    class="h-9 object-contain transition-opacity duration-300 group-hover:opacity-80" />
+            </a>
+
+            <!-- Nav Items -->
+            <div class="flex items-center gap-1">
+                <a routerLink="/ingressos" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: false}"
+                    class="nav-link">
+                    <i class="pi pi-ticket text-sm"></i>
+                    Eventos
+                </a>
+                <a routerLink="/produtos" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: false}"
+                    class="nav-link">
+                    <i class="pi pi-shop text-sm"></i>
+                    Loja
+                </a>
+                <a routerLink="/carrinho" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: false}"
+                    class="nav-link">
+                    <i class="pi pi-shopping-cart text-sm"></i>
+                    Carrinho
+                </a>
+            </div>
+
+            <!-- Right Actions -->
+            <div class="flex items-center gap-3">
+                <button (click)="toggleTheme()"
+                    class="w-9 h-9 rounded-xl flex items-center justify-center text-light-text-secondary dark:text-dark-text-secondary hover:bg-light-hover dark:hover:bg-dark-hover transition-colors"
+                    [attr.aria-label]="themeService.isDarkMode() ? 'Ativar tema claro' : 'Ativar tema escuro'">
+                    @if (themeService.isDarkMode()) {
+                    <i class="pi pi-sun text-lg"></i>
+                    } @else {
+                    <i class="pi pi-moon text-lg"></i>
+                    }
+                </button>
+
+                @if (isLoggedIn()) {
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary">
+                        {{ userName() }}
+                    </span>
+                    <button #userMenuButton type="button" (click)="userMenu.toggle($event)"
+                        class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white shadow-sm hover:shadow-glow transition-shadow"
+                        aria-label="Menu do usuário">
+                        <i class="pi pi-user text-sm"></i>
+                    </button>
+                    <p-menu #userMenu [model]="userMenuItems()" [popup]="true" appendTo="body" />
+                </div>
+                } @else {
+                <a routerLink="/auth/login"
+                    class="px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-all hover:shadow-glow">
+                    Entrar
+                </a>
+                }
+            </div>
+        </div>
+    </div>
+</nav>

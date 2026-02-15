@@ -1,0 +1,28 @@
+<div class="flex items-center gap-3 p-3 rounded-xl bg-light-hover/50 dark:bg-dark-surface-elevated/50 transition-all">
+    <img [src]="item.imageUrl || 'https://placehold.co/80x80/a855f7/ffffff?text=+'" [alt]="item.productName"
+        class="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />
+    <div class="flex-1 min-w-0">
+        <p class="font-semibold text-sm text-light-text-primary dark:text-dark-text-primary truncate">
+            {{ item.productName }}
+        </p>
+        <p class="text-[11px] text-light-text-tertiary dark:text-dark-text-tertiary mt-0.5">
+            {{ item.availabilityLabel }}
+        </p>
+        <div class="mt-1.5 flex items-center gap-2">
+            <label class="text-[11px] text-light-text-tertiary dark:text-dark-text-tertiary">Qtd.</label>
+            <input type="number" min="1" [value]="item.quantity" (change)="onQuantityChange($event)"
+                class="w-14 rounded-lg border border-light-border dark:border-dark-border px-2 py-1 text-xs bg-white dark:bg-dark-surface text-light-text-primary dark:text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all" />
+        </div>
+    </div>
+    <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+        <p class="text-sm font-bold text-primary-600 dark:text-primary-400">
+            {{ (item.quantity * item.unitPrice) | currency: 'BRL':'symbol-narrow':'1.2-2' }}
+        </p>
+        <button type="button"
+            class="text-[11px] font-semibold text-red-500 dark:text-red-400 hover:text-red-600 transition-colors"
+            (click)="onRemove()" aria-label="Remover item">
+            <i class="pi pi-trash text-[10px] mr-0.5"></i>
+            Remover
+        </button>
+    </div>
+</div>

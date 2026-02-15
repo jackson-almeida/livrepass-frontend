@@ -1,1 +1,50 @@
-// App layout styles
+/* Bottom Tab Navigation */
+:host {
+    display: block;
+}
+
+.bottom-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    color: #71717a;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+
+    &:active {
+        transform: scale(0.9);
+    }
+}
+
+.active-tab {
+    color: #a855f7 !important;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 20px;
+        height: 3px;
+        border-radius: 0 0 4px 4px;
+        background: #a855f7;
+    }
+}
+
+.dark .bottom-tab {
+    color: #71717a;
+}
+
+.dark .active-tab {
+    color: #c084fc !important;
+
+    &::before {
+        background: #c084fc;
+    }
+}

@@ -1,263 +1,253 @@
-<div class="space-y-8">
-  <div class="flex flex-wrap items-center justify-between gap-4">
-    <div>
-      <p class="text-sm uppercase tracking-[0.3em] text-primary-500">Loja oficial</p>
-      <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-50">Produtos e merchandising</h1>
-      <p class="text-gray-600 dark:text-gray-400 max-w-2xl">
-        Complete sua experiência com itens exclusivos do evento, camisetas oficiais, brindes e muito mais.
-      </p>
+<div class="space-y-5 animate-fade-in">
+  <!-- Header -->
+  <div>
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-50 dark:bg-accent-900/10 text-accent-600 dark:text-accent-400 text-xs font-semibold uppercase tracking-wider mb-3">
+      <i class="pi pi-shop text-[10px]"></i>
+      Loja oficial
     </div>
-    <div class="flex flex-wrap gap-3">
-      <button
-        pButton
-        type="button"
-        routerLink="/carrinho"
-        label="Ver carrinho"
-        icon="pi pi-shopping-cart"
-        severity="secondary"
-      ></button>
-      <button
-        pButton
-        type="button"
-        routerLink="/pagamento"
-        label="Ir para pagamento"
-        icon="pi pi-arrow-right"
-        [disabled]="!productSelections().length"
-      ></button>
-    </div>
+    <h1 class="text-xl sm:text-2xl font-extrabold text-light-text-primary dark:text-dark-text-primary">
+      Produtos e merchandising
+    </h1>
+    <p class="text-sm text-light-text-secondary dark:text-dark-text-secondary mt-1 max-w-lg">
+      Complete sua experiência com itens exclusivos do evento.
+    </p>
   </div>
 
+  <!-- Quick Actions -->
+  <div class="flex gap-2">
+    <a
+      routerLink="/carrinho"
+      class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-light-text-secondary dark:text-dark-text-secondary bg-light-hover dark:bg-dark-surface-elevated hover:bg-light-border dark:hover:bg-dark-hover transition-colors"
+    >
+      <i class="pi pi-shopping-cart text-[10px]"></i>
+      Carrinho
+    </a>
+    <a
+      routerLink="/pagamento"
+      class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 transition-colors"
+      [class.opacity-40]="!productSelections().length"
+      [class.pointer-events-none]="!productSelections().length"
+    >
+      <i class="pi pi-arrow-right text-[10px]"></i>
+      Pagamento
+    </a>
+  </div>
+
+  <!-- Feedback -->
   @if (feedbackMessage()) {
-    <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800 text-sm">
+    <div class="rounded-xl border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/10 px-4 py-3 text-emerald-700 dark:text-emerald-300 text-sm flex items-center gap-2 animate-fade-in">
+      <i class="pi pi-check-circle text-xs"></i>
       {{ feedbackMessage() }}
     </div>
   }
 
   @if (errorMessage()) {
-    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700 text-sm">
+    <div class="rounded-xl border border-red-200 dark:border-red-800/50 bg-red-50 dark:bg-red-900/10 px-4 py-3 text-red-700 dark:text-red-300 text-sm flex items-center gap-2 animate-fade-in">
+      <i class="pi pi-exclamation-triangle text-xs"></i>
       {{ errorMessage() }}
     </div>
   }
 
-  <div class="grid gap-8 lg:grid-cols-[2fr,1fr]">
+  <div class="grid gap-5 lg:grid-cols-[1fr,320px]">
+    <!-- Products -->
     <section>
       @if (loading()) {
-        <div class="grid gap-6 md:grid-cols-2">
+        <div class="grid gap-4 grid-cols-1 sm:grid-cols-2">
           @for (_ of [1,2,3,4]; track $index) {
-            <div class="animate-pulse rounded-2xl border border-gray-200 bg-white/40 p-6">
-              <div class="h-40 rounded-xl bg-gray-200"></div>
-              <div class="mt-4 h-6 rounded bg-gray-200"></div>
-              <div class="mt-2 h-4 rounded bg-gray-100"></div>
-              <div class="mt-8 h-10 rounded bg-gray-100"></div>
+            <div class="rounded-2xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-surface p-4">
+              <div class="aspect-[4/3] rounded-xl skeleton mb-4"></div>
+              <div class="h-5 w-3/4 skeleton mb-2"></div>
+              <div class="h-3 w-1/2 skeleton mb-4"></div>
+              <div class="h-10 w-full skeleton"></div>
             </div>
           }
         </div>
       } @else {
         @if (products().length) {
-          <div class="space-y-10">
+          <div class="space-y-5">
             @for (product of products(); track product.id) {
-              <div class="space-y-5">
-                @let cards = getCardsForProduct(product.id);
-                @if (cards.length) {
-                  <div class="grid gap-6 md:grid-cols-2">
-                    @for (card of cards; track card.key) {
-                      <p-card class="h-full flex flex-col">
-                        <ng-template pTemplate="header">
-                          <div class="product-card__cover">
-                            <img
-                              [src]="card.product.imageUrl || 'https://placehold.co/600x400/0ea5e9/ffffff?text=Produto'"
-                              [alt]="card.product.name"
-                              class="h-56 w-full rounded-2xl object-cover"
-                            />
+              @let cards = getCardsForProduct(product.id);
+              @if (cards.length) {
+                <div class="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                  @for (card of cards; track card.key) {
+                    <div class="group rounded-2xl bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border overflow-hidden hover:shadow-card-hover transition-all duration-300">
+                      <!-- Image -->
+                      <div class="relative aspect-[4/3] overflow-hidden">
+                        <img
+                          [src]="card.product.imageUrl || 'https://placehold.co/600x400/a855f7/ffffff?text=Produto'"
+                          [alt]="card.product.name"
+                          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        @if (card.availability.title) {
+                          <div class="absolute top-3 left-3">
+                            <span class="inline-flex px-2.5 py-1 rounded-full bg-primary-500/90 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wider">
+                              {{ card.availability.title }}
+                            </span>
                           </div>
-                        </ng-template>
+                        }
+                      </div>
 
-                        <div class="flex flex-1 flex-col gap-4">
-                          <div>
-                            <div class="flex flex-wrap items-start justify-between gap-3">
-                              <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-50">{{ card.product.name }}</h2>
-                              @if (card.availability.title) {
-                                <span class="rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-600">
-                                  {{ card.availability.title }}
-                                </span>
-                              }
-                            </div>
-                            @if (card.product.description) {
-                              <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                {{ card.product.description }}
-                              </p>
-                            }
-                            @if (card.product.tags?.length) {
-                              <div class="mt-3 flex flex-wrap gap-2">
-                                @for (tag of card.product.tags; track tag) {
-                                  <span class="rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-600">
-                                    {{ tag }}
-                                  </span>
-                                }
-                              </div>
-                            }
-                            @if (getCardMetadataLabel(card) && getCardMetadataValues(card).length) {
-                              <div class="mt-4 space-y-2">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                  {{ getCardMetadataLabel(card) }}
-                                </p>
-                                <div class="flex flex-wrap gap-2">
-                                  @for (value of getCardMetadataValues(card); track value) {
-                                    <button
-                                      type="button"
-                                      class="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide transition-colors"
-                                      [class.bg-primary-600]="getSelectedMetadata(card.key) === value"
-                                      [class.text-white]="getSelectedMetadata(card.key) === value"
-                                      [class.border-primary-600]="getSelectedMetadata(card.key) === value"
-                                      [class.text-gray-700]="getSelectedMetadata(card.key) !== value"
-                                      (click)="toggleMetadata(card.key, value)"
-                                    >
-                                      {{ value }}
-                                    </button>
-                                  }
-                                </div>
-                              </div>
-                            }
-                          </div>
+                      <div class="p-4 space-y-3">
+                        <!-- Title -->
+                        <div>
+                          <h2 class="text-base font-bold text-light-text-primary dark:text-dark-text-primary line-clamp-2">
+                            {{ card.product.name }}
+                          </h2>
+                          @if (card.product.description) {
+                            <p class="text-xs text-light-text-tertiary dark:text-dark-text-tertiary mt-1 line-clamp-2">
+                              {{ card.product.description }}
+                            </p>
+                          }
+                        </div>
 
-                          <div class="flex flex-col gap-1">
-                            <span class="text-sm text-gray-500">Quantidade</span>
-                            <p-inputNumber
-                              [min]="1"
-                              [max]="card.availability.maxPerPurchase || undefined"
-                              [ngModel]="getCardQuantity(card.key)"
-                              (ngModelChange)="updateCardQuantity(card.key, $event)"
-                              [inputId]="'qty-' + card.key"
-                              mode="decimal"
-                              [showButtons]="true"
-                            />
-                            @if (card.availability.maxPerPurchase) {
-                              <span class="text-xs text-gray-500">
-                                Máximo de {{ card.availability.maxPerPurchase }} por pedido.
+                        <!-- Tags -->
+                        @if (card.product.tags?.length) {
+                          <div class="flex flex-wrap gap-1.5">
+                            @for (tag of card.product.tags; track tag) {
+                              <span class="px-2 py-0.5 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-[10px] font-bold uppercase tracking-wider">
+                                {{ tag }}
                               </span>
                             }
                           </div>
+                        }
 
-                          <div class="flex flex-col gap-1">
-                            <span class="text-sm text-gray-500">Investimento</span>
-                            <p class="text-2xl font-bold text-primary-600">
-                              {{ (card.availability.price || card.product.basePrice || 0) | currency: 'BRL':'symbol-narrow':'1.2-2' }}
+                        <!-- Metadata (e.g. size) -->
+                        @if (getCardMetadataLabel(card) && getCardMetadataValues(card).length) {
+                          <div class="space-y-1.5">
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-light-text-tertiary dark:text-dark-text-tertiary">
+                              {{ getCardMetadataLabel(card) }}
                             </p>
-                            @if (card.availability.description) {
-                              <p class="text-xs text-gray-500">{{ card.availability.description }}</p>
-                            }
+                            <div class="flex flex-wrap gap-1.5">
+                              @for (value of getCardMetadataValues(card); track value) {
+                                <button
+                                  type="button"
+                                  class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all active:scale-95"
+                                  [class]="getSelectedMetadata(card.key) === value
+                                    ? 'bg-primary-600 text-white border-primary-600'
+                                    : 'bg-white dark:bg-dark-surface text-light-text-secondary dark:text-dark-text-secondary border-light-border dark:border-dark-border hover:border-primary-300'"
+                                  (click)="toggleMetadata(card.key, value)"
+                                >
+                                  {{ value }}
+                                </button>
+                              }
+                            </div>
                           </div>
+                        }
 
-                          <p-button
-                            label="Adicionar ao pedido"
-                            icon="pi pi-plus"
-                            [disabled]="!canAddCard(card)"
-                            (click)="addToOrder(card)"
+                        <!-- Quantity -->
+                        <div class="flex items-center gap-2">
+                          <label class="text-[11px] text-light-text-tertiary dark:text-dark-text-tertiary">Qtd.</label>
+                          <p-inputNumber
+                            [min]="1"
+                            [max]="card.availability.maxPerPurchase || undefined"
+                            [ngModel]="getCardQuantity(card.key)"
+                            (ngModelChange)="updateCardQuantity(card.key, $event)"
+                            [inputId]="'qty-' + card.key"
+                            mode="decimal"
+                            [showButtons]="true"
+                            [style]="{ width: '100%' }"
                           />
                         </div>
-                      </p-card>
-                    }
-                  </div>
-                } @else {
-                  <div class="rounded-2xl border border-dashed border-gray-300 bg-white/60 px-6 py-8 text-center text-sm text-gray-500">
-                    Nenhuma disponibilidade para o critério selecionado.
-                  </div>
-                }
-              </div>
+
+                        <!-- Price + Add -->
+                        <div class="flex items-center justify-between pt-1">
+                          <div>
+                            <p class="text-xs text-light-text-tertiary dark:text-dark-text-tertiary">Preço</p>
+                            <p class="text-lg font-extrabold text-primary-600 dark:text-primary-400">
+                              {{ (card.availability.price || card.product.basePrice || 0) | currency: 'BRL':'symbol-narrow':'1.2-2' }}
+                            </p>
+                          </div>
+                          <button
+                            (click)="addToOrder(card)"
+                            [disabled]="!canAddCard(card)"
+                            class="px-4 py-2.5 rounded-xl bg-primary-600 text-white text-xs font-bold disabled:opacity-40 hover:bg-primary-700 transition-all active:scale-95"
+                          >
+                            <i class="pi pi-plus mr-1.5 text-[10px]"></i>
+                            Adicionar
+                          </button>
+                        </div>
+
+                        @if (card.availability.maxPerPurchase) {
+                          <p class="text-[10px] text-light-text-tertiary dark:text-dark-text-tertiary">
+                            Máx {{ card.availability.maxPerPurchase }} por pedido
+                          </p>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
             }
           </div>
         } @else {
-          <div class="rounded-2xl border border-dashed border-gray-300 bg-white/60 px-6 py-12 text-center">
-            <p class="text-xl font-semibold text-gray-800">Nenhum produto disponível no momento.</p>
-            <p class="text-sm text-gray-500">Volte em breve para conferir novidades.</p>
+          <div class="text-center py-16">
+            <div class="w-16 h-16 rounded-2xl bg-light-hover dark:bg-dark-surface-elevated flex items-center justify-center mx-auto mb-4">
+              <i class="pi pi-shopping-bag text-3xl text-light-text-tertiary dark:text-dark-text-tertiary"></i>
+            </div>
+            <p class="text-base font-bold text-light-text-primary dark:text-dark-text-primary mb-1">
+              Nenhum produto disponível
+            </p>
+            <p class="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+              Volte em breve para conferir novidades.
+            </p>
           </div>
         }
       }
     </section>
 
-    <aside>
-      <p-card>
-        <ng-template pTemplate="header">
-          <div class="p-4">
-            <p class="text-sm uppercase tracking-[0.3em] text-gray-400">Meu pedido</p>
-            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-50">Produtos selecionados</h3>
-          </div>
-        </ng-template>
+    <!-- Sidebar: Selected Products -->
+    <aside class="lg:sticky lg:top-20 lg:self-start">
+      <div class="rounded-2xl bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border overflow-hidden">
+        <div class="p-4 border-b border-light-border dark:border-dark-border">
+          <h3 class="text-sm font-bold text-light-text-primary dark:text-dark-text-primary">Meu pedido</h3>
+        </div>
 
-        <div class="space-y-4">
+        <div class="p-4">
           @if (productSelections().length) {
-            <div class="space-y-4">
+            <div class="space-y-2.5 max-h-[50vh] overflow-y-auto">
               @for (item of productSelections(); track item.productId + '-' + item.availabilityId) {
-                <div class="flex gap-3 rounded-xl border border-gray-100 p-3 dark:border-gray-800">
-                  <img
-                    [src]="item.imageUrl || 'https://placehold.co/80x80/0ea5e9/ffffff?text=+'"
-                    [alt]="item.productName"
-                    class="h-20 w-20 rounded-lg object-cover"
-                  />
-                  <div class="flex-1">
-                    <p class="font-semibold text-gray-900 dark:text-gray-50">{{ item.productName }}</p>
-                    <p class="text-xs uppercase text-gray-500">{{ item.availabilityLabel }}</p>
-                    <div class="mt-2 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                      <span>Qtd.</span>
-                      <input
-                        type="number"
-                        min="1"
-                        [ngModel]="item.quantity"
-                        (ngModelChange)="updateSelectionQuantity(item, $event)"
-                        class="w-16 rounded-md border border-gray-300 px-2 py-1 text-sm dark:bg-gray-900"
-                      />
-                    </div>
-                  </div>
-                  <div class="flex flex-col items-end justify-between text-right">
-                    <p class="text-sm font-semibold text-primary-600">
-                      {{ (item.quantity * item.unitPrice) | currency: 'BRL':'symbol-narrow':'1.2-2' }}
-                    </p>
-                    <button
-                      type="button"
-                      class="text-xs font-semibold text-red-500 hover:text-red-600"
-                      (click)="removeSelection(item.productId, item.availabilityId)"
-                    >
-                      Remover
-                    </button>
-                  </div>
-                </div>
+                <app-cart-item
+                  [item]="item"
+                  (remove)="removeSelection(item.productId, item.availabilityId)"
+                  (quantityChange)="updateSelectionQuantity($event.item, $event.quantity)"
+                />
               }
+            </div>
 
-              <div class="border-t border-gray-200 pt-4">
-                <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
-                  <span>Total</span>
-                  <span class="text-xl font-bold text-primary-600">
-                    {{ productsTotal() | currency: 'BRL':'symbol-narrow':'1.2-2' }}
-                  </span>
-                </div>
-                <p class="text-xs text-gray-500">
-                  Os produtos serão cobrados junto com o pagamento final dos ingressos.
-                </p>
+            <div class="border-t border-light-border dark:border-dark-border pt-3 mt-3 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-semibold text-light-text-secondary dark:text-dark-text-secondary">Total</span>
+                <span class="text-lg font-extrabold text-primary-600 dark:text-primary-400">
+                  {{ productsTotal() | currency: 'BRL':'symbol-narrow':'1.2-2' }}
+                </span>
               </div>
-
-              <div class="flex flex-col gap-3 pt-2">
+              <div class="flex flex-col gap-2">
                 <a
-                  pButton
                   routerLink="/carrinho"
-                  label="Revisar pedido"
-                  icon="pi pi-list"
-                  severity="secondary"
-                ></a>
+                  class="w-full py-2.5 rounded-xl border border-light-border dark:border-dark-border text-light-text-secondary dark:text-dark-text-secondary font-semibold text-xs text-center hover:bg-light-hover dark:hover:bg-dark-hover transition-colors"
+                >
+                  Revisar pedido
+                </a>
                 <a
-                  pButton
                   routerLink="/pagamento"
-                  label="Ir para pagamento"
-                  icon="pi pi-credit-card"
-                ></a>
+                  class="w-full py-2.5 rounded-xl bg-primary-600 text-white font-bold text-xs text-center hover:bg-primary-700 transition-colors"
+                >
+                  Ir para pagamento
+                </a>
               </div>
             </div>
           } @else {
-            <div class="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
-              Nenhum produto adicionado ainda.
+            <div class="py-8 text-center">
+              <div class="w-12 h-12 rounded-2xl bg-light-hover dark:bg-dark-surface-elevated flex items-center justify-center mx-auto mb-3">
+                <i class="pi pi-shopping-bag text-xl text-light-text-tertiary dark:text-dark-text-tertiary"></i>
+              </div>
+              <p class="text-sm font-semibold text-light-text-primary dark:text-dark-text-primary">Vazio</p>
+              <p class="text-xs text-light-text-tertiary dark:text-dark-text-tertiary mt-1">Adicione produtos ao pedido</p>
             </div>
           }
         </div>
-      </p-card>
+      </div>
     </aside>
   </div>
 </div>
