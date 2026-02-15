@@ -1,4 +1,4 @@
-/* You can add global styles to this file, and also import other style files */
+/* Borali - Global Styles */
 
 @tailwind base;
 @tailwind components;
@@ -6,102 +6,174 @@
 
 @import "primeicons/primeicons.css";
 
-/* Forçar fundo branco e texto escuro nos cards e forms no modo escuro */
+/* ===== Base Reset ===== */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-light-bg dark:bg-dark-bg text-light-text-primary dark:text-dark-text-primary;
+    overscroll-behavior-y: contain;
+  }
+
+  /* Safe area for iOS */
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* ===== PrimeNG Dark Overrides ===== */
 .dark {
-  /* Cards do PrimeNG */
   p-card .p-card {
-    background: white !important;
-    color: #1a1a1a !important;
-    border: 1px solid #e5e7eb !important;
+    background: #18181b;
+    color: #fafafa;
+    border: 1px solid #27272a;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    border-radius: 1rem;
+  }
+
+  p-card .p-card:hover {
+    border-color: #3f3f46;
   }
 
   p-card .p-card .p-card-title,
   p-card .p-card .p-card-subtitle,
   p-card .p-card .p-card-content {
-    color: #1a1a1a !important;
+    color: #fafafa;
   }
 
-  /* Forçar textos dentro dos cards sempre escuros */
-  p-card h2,
-  p-card h3,
-  p-card h4,
-  p-card p,
-  p-card span,
-  p-card label,
-  p-card div {
-    color: #1a1a1a !important;
+  p-card h2, p-card h3, p-card h4 {
+    color: #fafafa;
   }
 
-  /* Exceção para textos de links e botões secundários */
+  p-card p, p-card span, p-card label, p-card div {
+    color: #a1a1aa;
+  }
+
   p-card a {
-    color: #8b5cf6 !important;
+    color: #c084fc;
   }
 
   p-card a:hover {
-    color: #7c3aed !important;
+    color: #d8b4fe;
   }
 
-  /* Inputs do PrimeNG */
+  /* Inputs */
   .p-inputtext,
   .p-inputmask,
   .p-select,
   .p-select .p-select-label,
   .p-password input,
   .p-calendar input {
-    background: white !important;
-    color: #1a1a1a !important;
-    border-color: #d1d5db !important;
+    background: #18181b;
+    color: #fafafa;
+    border-color: #3f3f46;
+    border-radius: 0.75rem;
   }
 
   .p-inputtext::placeholder,
   .p-inputmask::placeholder,
   .p-password input::placeholder {
-    color: #9ca3af !important;
+    color: #71717a;
   }
 
   .p-inputtext:enabled:focus,
   .p-inputmask:enabled:focus,
   .p-password input:enabled:focus {
-    border-color: #8b5cf6 !important;
-    box-shadow: 0 0 0 1px #8b5cf6 !important;
+    border-color: #a855f7;
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
   }
 
-  /* Select dropdown */
   .p-select:not(.p-disabled):hover,
   .p-select:not(.p-disabled).p-focus {
-    border-color: #8b5cf6 !important;
+    border-color: #a855f7;
   }
 
   .p-select-overlay {
-    background: white !important;
-    color: #1a1a1a !important;
+    background: #18181b;
+    border: 1px solid #3f3f46;
+    color: #fafafa;
+    border-radius: 0.75rem;
   }
 
-  .p-select-option {
-    color: #1a1a1a !important;
-  }
+  .p-select-option { color: #fafafa; }
+  .p-select-option:hover { background: #27272a; }
+  .p-select-option.p-focus { background: #3f3f46; }
 
-  .p-select-option:hover {
-    background: #f3f4f6 !important;
-  }
+  label { color: #a1a1aa; }
 
-  .p-select-option.p-focus {
-    background: #ede9fe !important;
-  }
-
-  /* Labels e textos de formulário */
-  label {
-    color: #374151 !important;
-  }
-
-  /* Password strength meter */
   .p-password-overlay {
-    background: white !important;
-    color: #1a1a1a !important;
+    background: #18181b;
+    border: 1px solid #3f3f46;
+    color: #fafafa;
   }
 
-  /* Ícones dentro dos cards */
-  p-card .pi {
-    color: #8b5cf6 !important;
+  p-card .pi { color: #c084fc; }
+}
+
+/* ===== PrimeNG Light Overrides ===== */
+:not(.dark) {
+  p-card .p-card {
+    background: #ffffff;
+    color: #09090b;
+    border: 1px solid #e4e4e7;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    border-radius: 1rem;
   }
+
+  p-card .p-card:hover {
+    border-color: #d4d4d8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  p-card .p-card .p-card-title,
+  p-card .p-card .p-card-subtitle,
+  p-card .p-card .p-card-content {
+    color: #09090b;
+  }
+
+  p-card h2, p-card h3, p-card h4 { color: #09090b; }
+
+  p-card p, p-card span, p-card label, p-card div { color: #71717a; }
+
+  p-card a { color: #9333ea; }
+  p-card a:hover { color: #7e22ce; }
+
+  .p-inputtext,
+  .p-inputmask,
+  .p-password input {
+    border-radius: 0.75rem;
+  }
+
+  .p-inputtext:enabled:focus,
+  .p-inputmask:enabled:focus,
+  .p-password input:enabled:focus {
+    border-color: #a855f7;
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.15);
+  }
+}
+
+/* ===== PrimeNG Button overrides ===== */
+.p-button {
+  border-radius: 0.75rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.p-button:not(.p-disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.25);
+}
+
+.p-button:not(.p-disabled):active {
+  transform: translateY(0) scale(0.98);
 }
