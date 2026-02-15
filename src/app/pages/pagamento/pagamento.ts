@@ -1,10 +1,8 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, OnDestroy, inject, OnInit, computed, signal } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
 import { Subscription, filter } from 'rxjs';
-import { PurchaseService, PurchaseData } from '../../services/purchase.service';
+import { CartReservationService, CartReservation } from '../../services/cart-reservation.service';
 import { ProductSelection } from '../../models/product.model';
 import { ProductSelectionService } from '../../services/product-selection.service';
 import { QueueAccessStore } from '../../services/queue-access.store';
@@ -12,21 +10,29 @@ import { WaitingRoomCardComponent } from '../../components/waiting-room-card/wai
 
 @Component({
   selector: 'app-pagamento',
-  imports: [CardModule, ButtonModule, RouterOutlet, RouterLink, CurrencyPipe, WaitingRoomCardComponent],
+  imports: [RouterOutlet, RouterLink, CurrencyPipe, WaitingRoomCardComponent],
   templateUrl: './pagamento.html',
   styleUrl: './pagamento.scss'
 })
 export class PagamentoComponent implements OnInit, OnDestroy {
   router = inject(Router);
-  purchaseService = inject(PurchaseService);
+  cartReservationService = inject(CartReservationService);
   productSelectionService = inject(ProductSelectionService);
   queueAccessStore = inject(QueueAccessStore);
 
   showSelection = true;
-  purchaseData = signal<PurchaseData | null>(null);
+  reservation = this.cartReservationService.reservation;
+  remainingFormatted = this.cartReservationService.remainingFormatted;
+  remainingSeconds = this.cartReservationService.remainingSeconds;
+  isExpired = this.cartReservationService.isExpired;
+
   productSelections = this.productSelectionService.selections();
   productsTotal = computed(() => this.productSelectionService.getTotalAmount());
-  grandTotal = computed(() => (this.purchaseData()?.total ?? 0) + this.productsTotal());
+  ticketsTotal = computed(() => {
+    const res = this.reservation();
+    return res ? parseFloat(res.totalAmount) : 0;
+  });
+  grandTotal = computed(() => this.ticketsTotal() + this.productsTotal());
   queueState = this.queueAccessStore.state;
   queuePosition = this.queueAccessStore.position;
   queueErrorMessage = this.queueAccessStore.errorMessage;
@@ -34,16 +40,14 @@ export class PagamentoComponent implements OnInit, OnDestroy {
   private routerEventsSub?: Subscription;
 
   ngOnInit() {
-    // Carrega dados da compra
-    const purchase = this.purchaseService.getPurchase();
-
-    if (!purchase) {
-      // Se não houver compra, redireciona para ingressos
-      this.router.navigate(['/ingressos']);
-      return;
+    // If no reservation, try to load from server
+    if (!this.reservation()) {
+      this.cartReservationService.loadActiveCart().then((cart) => {
+        if (!cart) {
+          this.router.navigate(['/ingressos']);
+        }
+      });
     }
-
-    this.purchaseData.set(purchase);
 
     // Verifica a URL atual
     this.checkRoute();
@@ -68,6 +72,10 @@ export class PagamentoComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.isExpired()) {
+      return;
+    }
+
     this.showSelection = false;
     this.router.navigate(['/pagamento', method]);
   }
@@ -86,5 +94,12 @@ export class PagamentoComponent implements OnInit, OnDestroy {
 
   forceQueueRefresh(): void {
     this.queueAccessStore.refresh();
+  }
+
+  timerUrgency(): 'normal' | 'warning' | 'critical' {
+    const secs = this.remainingSeconds();
+    if (secs <= 60) return 'critical';
+    if (secs <= 300) return 'warning';
+    return 'normal';
   }
 }

@@ -1,160 +1,187 @@
-<div class="space-y-6 max-w-4xl mx-auto">
-  <div class="flex items-center gap-4 mb-8">
-    <button
-      (click)="router.navigate(['/ingressos'])"
-      class="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
-    >
-      <i class="pi pi-arrow-left text-xl"></i>
+<div class="space-y-5 animate-fade-in">
+  <!-- Header -->
+  <div class="flex items-center gap-3">
+    <button (click)="router.navigate(['/carrinho'])"
+      class="w-9 h-9 rounded-xl border border-light-border dark:border-dark-border flex items-center justify-center text-light-text-secondary dark:text-dark-text-secondary hover:bg-light-hover dark:hover:bg-dark-hover transition-all active:scale-95">
+      <i class="pi pi-arrow-left text-sm"></i>
     </button>
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Pagamento</h1>
+    <div>
+      <h1 class="text-xl font-extrabold text-light-text-primary dark:text-dark-text-primary">Pagamento</h1>
+      <p class="text-xs text-light-text-tertiary dark:text-dark-text-tertiary">Escolha como pagar</p>
+    </div>
   </div>
 
-  <!-- Resumo da Compra -->
-  @if (purchaseData()) {
-    <p-card>
-      <ng-template pTemplate="header">
-        <div class="p-4 border-b dark:border-dark-border">
-          <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Resumo da Compra</h2>
-        </div>
-      </ng-template>
+  <!-- Timer Banner -->
+  @if (reservation() && !isExpired()) {
+  <div class="rounded-2xl border overflow-hidden p-3 flex items-center justify-between" [class]="timerUrgency() === 'critical'
+        ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50'
+        : timerUrgency() === 'warning'
+        ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50'
+        : 'bg-primary-50 dark:bg-primary-900/10 border-primary-200 dark:border-primary-800/50'">
+    <div class="flex items-center gap-2">
+      <i class="pi pi-clock" [class]="timerUrgency() === 'critical'
+            ? 'text-red-500'
+            : timerUrgency() === 'warning'
+            ? 'text-amber-500'
+            : 'text-primary-500'"></i>
+      <span class="text-sm font-medium text-light-text-primary dark:text-dark-text-primary">
+        Tempo restante
+      </span>
+    </div>
+    <span class="text-lg font-extrabold font-mono tabular-nums" [class]="timerUrgency() === 'critical'
+          ? 'text-red-600 dark:text-red-400 animate-pulse'
+          : timerUrgency() === 'warning'
+          ? 'text-amber-600 dark:text-amber-400'
+          : 'text-primary-600 dark:text-primary-400'">
+      {{ remainingFormatted() }}
+    </span>
+  </div>
+  }
 
-      <div class="space-y-3">
-        <div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">Evento</p>
-          <p class="font-semibold text-gray-900 dark:text-gray-100">{{ purchaseData()!.eventName }}</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">{{ purchaseData()!.batchName }}</p>
-        </div>
+  @if (isExpired()) {
+  <div class="rounded-2xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/50 p-6 text-center">
+    <div class="w-14 h-14 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+      <i class="pi pi-exclamation-triangle text-2xl text-red-500"></i>
+    </div>
+    <h3 class="text-base font-bold text-red-900 dark:text-red-200">Tempo de reserva esgotado</h3>
+    <p class="text-sm text-red-700 dark:text-red-300 mt-2">
+      Os ingressos foram liberados. Selecione novamente para continuar.
+    </p>
+    <a routerLink="/ingressos"
+      class="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 text-white font-semibold text-sm hover:bg-primary-700 transition-all">
+      <i class="pi pi-arrow-left text-xs"></i>
+      Ver eventos
+    </a>
+  </div>
+  } @else {
 
-        @if (purchaseData()!.categories.length) {
-          <div class="space-y-2">
-            @for (item of purchaseData()!.categories; track item.categoryId) {
-              @if (item.quantity > 0) {
-                <div class="flex justify-between">
-                  <span class="text-gray-700 dark:text-gray-300">
-                    {{ item.quantity }}x {{ item.label }}
-                  </span>
-                  <span class="font-semibold text-gray-900 dark:text-gray-100">
-                    {{ (item.quantity * item.unitPrice) | currency: 'BRL':'symbol-narrow':'1.2-2' }}
-                  </span>
-                </div>
-              }
-            }
-          </div>
-        } @else {
-          <p class="text-sm text-gray-500 dark:text-gray-400">Nenhum ingresso selecionado.</p>
+  <!-- Purchase Summary -->
+  @if (reservation()) {
+  <div
+    class="rounded-2xl bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border overflow-hidden">
+    <div class="p-4 border-b border-light-border dark:border-dark-border">
+      <h2 class="text-sm font-bold text-light-text-primary dark:text-dark-text-primary">Resumo da compra</h2>
+    </div>
+    <div class="p-4 space-y-3">
+      <div>
+        <p class="text-xs text-light-text-tertiary dark:text-dark-text-tertiary">Evento</p>
+        <p class="font-semibold text-sm text-light-text-primary dark:text-dark-text-primary">{{ reservation()!.eventName
+          }}</p>
+      </div>
+
+      @if (reservation()!.items.length) {
+      <div class="space-y-1.5">
+        @for (item of reservation()!.items; track item.categoryId) {
+        @if (item.quantity > 0) {
+        <div class="flex justify-between text-sm">
+          <span class="text-light-text-secondary dark:text-dark-text-secondary">
+            {{ item.quantity }}x {{ item.label }}
+          </span>
+          <span class="font-semibold text-light-text-primary dark:text-dark-text-primary">
+            {{ item.totalPrice | currency: 'BRL':'symbol-narrow':'1.2-2' }}
+          </span>
+        </div>
         }
+        }
+      </div>
+      }
 
-        <div class="mt-4 space-y-2">
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Produtos</h3>
-            <a
-              routerLink="/produtos"
-              class="text-xs font-semibold uppercase tracking-wide text-primary-600 hover:text-primary-400"
-            >
-              editar
-            </a>
-          </div>
-          @if (productSelections().length) {
-            <div class="space-y-2">
-              @for (selection of productSelections(); track selection.productId + '-' + selection.availabilityId) {
-                <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
-                  <div>
-                    <p class="font-medium text-gray-800 dark:text-gray-100">{{ selection.productName }}</p>
-                    <p class="text-xs text-gray-500">{{ selection.quantity }}x {{ selection.availabilityLabel }}</p>
-                  </div>
-                  <div class="text-right">
-                    <p class="font-semibold text-primary-600">
-                      {{ (selection.quantity * selection.unitPrice) | currency: 'BRL':'symbol-narrow':'1.2-2' }}
-                    </p>
-                    <button
-                      type="button"
-                      class="text-[11px] font-semibold uppercase tracking-wide text-red-500 hover:text-red-400"
-                      (click)="removeProduct(selection)"
-                    >
-                      remover
-                    </button>
-                  </div>
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="text-xs text-gray-500">Nenhum produto selecionado.</p>
-          }
+      <!-- Products -->
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold text-light-text-primary dark:text-dark-text-primary uppercase tracking-wider">
+            Produtos</h3>
+          <a routerLink="/produtos" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400">editar</a>
         </div>
+        @if (productSelections().length) {
+        @for (selection of productSelections(); track selection.productId + '-' + selection.availabilityId) {
+        <div class="flex items-center justify-between text-sm">
+          <div>
+            <p class="font-medium text-light-text-primary dark:text-dark-text-primary text-xs">{{ selection.productName
+              }}</p>
+            <p class="text-[11px] text-light-text-tertiary dark:text-dark-text-tertiary">{{ selection.quantity }}x {{
+              selection.availabilityLabel }}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <p class="font-semibold text-primary-600 dark:text-primary-400 text-xs">
+              {{ (selection.quantity * selection.unitPrice) | currency: 'BRL':'symbol-narrow':'1.2-2' }}
+            </p>
+            <button (click)="removeProduct(selection)" class="text-red-500 hover:text-red-600">
+              <i class="pi pi-times text-[10px]"></i>
+            </button>
+          </div>
+        </div>
+        }
+        } @else {
+        <p class="text-[11px] text-light-text-tertiary dark:text-dark-text-tertiary">Nenhum produto</p>
+        }
+      </div>
 
-        <div class="pt-3 border-t dark:border-dark-border">
-          <div class="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400 mb-2">
-            <span>Ingressos</span>
-            <span class="font-semibold text-gray-900 dark:text-gray-100">
-              {{ purchaseData()!.total | currency: 'BRL':'symbol-narrow':'1.2-2' }}
-            </span>
-          </div>
-          <div class="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
-            <span>Produtos</span>
-            <span class="font-semibold text-gray-900 dark:text-gray-100">
-              {{ productsTotal() | currency: 'BRL':'symbol-narrow':'1.2-2' }}
-            </span>
-          </div>
-          <div class="mt-3 flex justify-between items-center text-xs uppercase text-gray-500">
-            <span>Total de ingressos</span>
-            <span class="font-semibold text-gray-900 dark:text-gray-100">{{ purchaseData()!.totalTickets }}</span>
-          </div>
-          <div class="flex justify-between items-center mt-3">
-            <span class="text-lg font-bold text-gray-900 dark:text-gray-100">Total geral</span>
-            <span class="text-2xl font-bold text-primary-600 dark:text-primary-400">
-              {{ grandTotal() | currency: 'BRL':'symbol-narrow':'1.2-2' }}
-            </span>
-          </div>
+      <!-- Totals -->
+      <div class="pt-3 border-t border-dashed border-light-border dark:border-dark-border space-y-1.5">
+        <div class="flex justify-between text-sm">
+          <span class="text-light-text-secondary dark:text-dark-text-secondary">Ingressos</span>
+          <span class="font-semibold text-light-text-primary dark:text-dark-text-primary">
+            {{ ticketsTotal() | currency: 'BRL':'symbol-narrow':'1.2-2' }}
+          </span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-light-text-secondary dark:text-dark-text-secondary">Produtos</span>
+          <span class="font-semibold text-light-text-primary dark:text-dark-text-primary">
+            {{ productsTotal() | currency: 'BRL':'symbol-narrow':'1.2-2' }}
+          </span>
+        </div>
+        <div class="flex justify-between items-center pt-2">
+          <span class="font-bold text-light-text-primary dark:text-dark-text-primary">Total</span>
+          <span class="text-xl font-extrabold text-primary-600 dark:text-primary-400">
+            {{ grandTotal() | currency: 'BRL':'symbol-narrow':'1.2-2' }}
+          </span>
         </div>
       </div>
-    </p-card>
+    </div>
+  </div>
   }
 
   @if (queueState() !== 'allowed') {
-    <app-waiting-room-card
-      [state]="queueState()"
-      [position]="queuePosition()"
-      [errorMessage]="queueErrorMessage()"
-      subtitle="Assim que sua vez chegar liberaremos automaticamente as opções de pagamento."
-      footerNote="Seus ingressos ficam reservados enquanto você permanece aqui."
-      (refresh)="forceQueueRefresh()"
-      (retry)="retryQueueAccess()"
-    />
+  <app-waiting-room-card [state]="queueState()" [position]="queuePosition()" [errorMessage]="queueErrorMessage()"
+    subtitle="Assim que sua vez chegar liberaremos automaticamente as opções de pagamento."
+    footerNote="Seus ingressos ficam reservados enquanto você permanece aqui." (refresh)="forceQueueRefresh()"
+    (retry)="retryQueueAccess()" />
   } @else {
-    <!-- Seleção de forma de pagamento -->
-    @if (showSelection) {
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Cartão -->
-        <p-card class="cursor-pointer hover:shadow-lg transition-shadow">
-          <div
-            (click)="selectPaymentMethod('card')"
-            class="text-center space-y-4 p-6"
-          >
-            <div class="flex justify-center">
-              <i class="pi pi-credit-card text-6xl text-primary-600 dark:text-primary-400"></i>
-            </div>
-            <h3 class="text-xl font-semibold dark:text-gray-100">Cartão de Crédito/Débito</h3>
-            <p class="text-gray-600 dark:text-gray-400">Pague com seu cartão de forma segura</p>
-          </div>
-        </p-card>
+  <!-- Payment Method Selection -->
+  @if (showSelection) {
+  <div class="space-y-3">
+    <h2 class="text-sm font-bold text-light-text-primary dark:text-dark-text-primary">Forma de pagamento</h2>
 
-        <!-- PIX -->
-        <p-card class="cursor-pointer hover:shadow-lg transition-shadow">
-          <div
-            (click)="selectPaymentMethod('pix')"
-            class="text-center space-y-4 p-6"
-          >
-            <div class="flex justify-center">
-              <i class="pi pi-qrcode text-6xl text-primary-600 dark:text-primary-400"></i>
-            </div>
-            <h3 class="text-xl font-semibold dark:text-gray-100">PIX</h3>
-            <p class="text-gray-600 dark:text-gray-400">Pagamento instantâneo via PIX</p>
-          </div>
-        </p-card>
+    <button (click)="selectPaymentMethod('card')"
+      class="w-full flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-card-hover transition-all active:scale-[0.99]">
+      <div
+        class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-neon-blue flex items-center justify-center flex-shrink-0">
+        <i class="pi pi-credit-card text-white text-lg"></i>
       </div>
-    } @else {
-      <!-- Outlet para formulário de cartão ou PIX -->
-      <router-outlet />
-    }
+      <div class="text-left flex-1">
+        <h3 class="font-bold text-sm text-light-text-primary dark:text-dark-text-primary">Cartão de Crédito/Débito</h3>
+        <p class="text-xs text-light-text-tertiary dark:text-dark-text-tertiary mt-0.5">Visa, Mastercard, Elo, Amex</p>
+      </div>
+      <i class="pi pi-chevron-right text-light-text-tertiary dark:text-dark-text-tertiary text-sm"></i>
+    </button>
+
+    <button (click)="selectPaymentMethod('pix')"
+      class="w-full flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-card-hover transition-all active:scale-[0.99]">
+      <div
+        class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
+        <i class="pi pi-qrcode text-white text-lg"></i>
+      </div>
+      <div class="text-left flex-1">
+        <h3 class="font-bold text-sm text-light-text-primary dark:text-dark-text-primary">PIX</h3>
+        <p class="text-xs text-light-text-tertiary dark:text-dark-text-tertiary mt-0.5">Pagamento instantâneo</p>
+      </div>
+      <i class="pi pi-chevron-right text-light-text-tertiary dark:text-dark-text-tertiary text-sm"></i>
+    </button>
+  </div>
+  } @else {
+  <router-outlet />
+  }
+  }
   }
 </div>

@@ -1,7 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PurchaseData } from './purchase.service';
+import { AuthService } from './auth.service';
+import { CartReservationService, TicketParticipant } from './cart-reservation.service';
 import { environment } from '../config/environment';
 import { ProductSaleReference } from '../models/product.model';
 
@@ -43,6 +45,8 @@ interface BasePaymentPayload {
   description?: string;
   clientIp?: string;
   productSales?: ProductSaleReference[];
+  participants?: TicketParticipant[];
+  cartReservationId?: string;
 }
 
 export interface PixPaymentRequest extends BasePaymentPayload {
@@ -100,6 +104,8 @@ interface CardPaymentOptions {
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
+  private cartReservationService = inject(CartReservationService);
   private readonly baseUrl = environment.apiUrl.replace(/\/$/, '');
 
   createPixPayment(
@@ -107,6 +113,9 @@ export class PaymentService {
     customer: PaymentCustomerPayload,
     options?: PixPaymentOptions,
   ): Observable<PixPaymentResponse> {
+    const reservation = this.cartReservationService.reservation();
+    const participants = this.cartReservationService.getParticipants();
+
     const payload: PixPaymentRequest = {
       eventId: Number(purchase.eventId),
       customer,
@@ -116,13 +125,19 @@ export class PaymentService {
       returnUrl: options?.returnUrl,
       paymentMethodId: 'pix',
       payment_method_id: 'pix',
+      participants: participants.length ? participants : undefined,
+      cartReservationId: reservation?.id,
     };
 
     if (options?.productSales?.length) {
       payload.productSales = options.productSales;
     }
 
-    return this.http.post<PixPaymentResponse>(`${this.baseUrl}/payments/pix`, payload);
+    return this.http.post<PixPaymentResponse>(
+      `${this.baseUrl}/payments/pix`,
+      payload,
+      { headers: this.getAuthHeaders() },
+    );
   }
 
   createCardPayment(
@@ -137,6 +152,9 @@ export class PaymentService {
     },
     options?: CardPaymentOptions,
   ): Observable<CardPaymentResponse> {
+    const reservation = this.cartReservationService.reservation();
+    const participants = this.cartReservationService.getParticipants();
+
     const payload: CardPaymentRequest = {
       eventId: Number(purchase.eventId),
       customer,
@@ -148,13 +166,19 @@ export class PaymentService {
       issuerId: card.issuerId,
       installments: card.installments,
       cardHolderName: card.holderName,
+      participants: participants.length ? participants : undefined,
+      cartReservationId: reservation?.id,
     };
 
     if (options?.productSales?.length) {
       payload.productSales = options.productSales;
     }
 
-    return this.http.post<CardPaymentResponse>(`${this.baseUrl}/payments/card`, payload);
+    return this.http.post<CardPaymentResponse>(
+      `${this.baseUrl}/payments/card`,
+      payload,
+      { headers: this.getAuthHeaders() },
+    );
   }
 
   getPaymentStatus(purchaseId: string): Observable<PaymentSummaryResponse> {
@@ -178,5 +202,14 @@ export class PaymentService {
     }
 
     return items;
+  }
+
+  private getAuthHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
+    let headers = new HttpHeaders();
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+    return headers;
   }
 }

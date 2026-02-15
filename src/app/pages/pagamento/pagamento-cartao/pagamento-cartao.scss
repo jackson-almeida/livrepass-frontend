@@ -1,31 +1,27 @@
-
-.mp-field {
-	border: 1px solid #d1d5db;
-	border-radius: 0.5rem;
-	height: 2.60rem;
-	padding: 0.5rem 0.75rem;
-	background-color: #fff;
-	display: flex;
-	align-items: center;
-	transition: border-color 0.2s ease, box-shadow 0.2s ease;
-
-	&:focus-within {
-		border-color: #2563eb;
-		box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-	}
-
-	&.error {
-		border-color: #dc2626;
-	}
+:host {
+  display: block;
 }
 
+.mp-field {
+  min-height: 44px;
+  border: 1px solid #e4e4e7;
+  border-radius: 0.75rem;
+  padding: 0 0.75rem;
+  background: #fff;
+  transition: border-color 0.2s ease;
+
+  &:focus-within {
+    border-color: #a855f7;
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.15);
+  }
+}
 
 :host-context(.dark) .mp-field {
-	border-color: #374151;
-	background-color: #1f2937;
+  border-color: #3f3f46;
+  background: #18181b;
 
-	&:focus-within {
-		border-color: #60a5fa;
-		box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25);
-	}
+  &:focus-within {
+    border-color: #a855f7;
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+  }
 }

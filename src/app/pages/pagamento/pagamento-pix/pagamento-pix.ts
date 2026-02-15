@@ -3,8 +3,6 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { interval, startWith, switchMap, Subscription, firstValueFrom } from 'rxjs';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { PurchaseData, PurchaseService } from '../../../services/purchase.service';
 import {
@@ -15,10 +13,11 @@ import {
 } from '../../../services/payment.service';
 import { ProductSelectionService } from '../../../services/product-selection.service';
 import { ProductPurchaseCustomer, ProductSaleReference } from '../../../models/product.model';
+import { CartReservationService } from '../../../services/cart-reservation.service';
 
 @Component({
   selector: 'app-pagamento-pix',
-  imports: [CommonModule, CurrencyPipe, CardModule, ButtonModule, ReactiveFormsModule, InputTextModule],
+  imports: [CommonModule, CurrencyPipe, ReactiveFormsModule, InputTextModule],
   templateUrl: './pagamento-pix.html',
   styleUrl: './pagamento-pix.scss',
 })
@@ -27,6 +26,7 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
   private purchaseService = inject(PurchaseService);
   private paymentService = inject(PaymentService);
   private productSelectionService = inject(ProductSelectionService);
+  private cartReservationService = inject(CartReservationService);
   private fb = inject(FormBuilder);
 
   purchaseData = signal<PurchaseData | null>(null);
@@ -37,6 +37,10 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
   successMessage = signal<string | null>(null);
   productsTotal = computed(() => this.productSelectionService.getTotalAmount());
   totalToPay = computed(() => (this.purchaseData()?.total ?? 0) + this.productsTotal());
+
+  // Timer from cart reservation
+  remainingFormatted = this.cartReservationService.remainingFormatted;
+  isExpired = this.cartReservationService.isExpired;
 
   private pollingSub?: Subscription;
 
@@ -52,7 +56,33 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
   ngOnInit() {
     const purchase = this.purchaseService.getPurchase();
     if (!purchase) {
-      this.router.navigate(['/ingressos']);
+      // Try to build purchase data from reservation
+      const reservation = this.cartReservationService.reservation();
+      if (!reservation) {
+        this.router.navigate(['/ingressos']);
+        return;
+      }
+      // Build a PurchaseData-like object from reservation
+      const fakePurchase: PurchaseData = {
+        eventId: String(reservation.eventId),
+        eventName: reservation.eventName,
+        batchId: reservation.items[0]?.batchId ?? 0,
+        batchName: reservation.items[0]?.batchName ?? '',
+        categories: reservation.items.map((item) => ({
+          categoryId: item.categoryId,
+          label: item.label,
+          type: item.categoryType,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+          maxPerPurchase: item.maxPerPurchase,
+        })),
+        totalTickets: reservation.totalTickets,
+        total: parseFloat(reservation.totalAmount),
+        timestamp: Date.now(),
+      };
+      this.purchaseData.set(fakePurchase);
+      // Save to localStorage for compatibility
+      this.purchaseService.savePurchase(fakePurchase);
       return;
     }
 
@@ -70,6 +100,11 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
   async gerarCodigoPix(): Promise<void> {
     const purchase = this.purchaseData();
     if (!purchase) {
+      return;
+    }
+
+    if (this.isExpired()) {
+      this.errorMessage.set('Tempo de reserva expirado. Selecione os ingressos novamente.');
       return;
     }
 
@@ -99,6 +134,7 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
       this.paymentStatus.set(response.status);
       if (this.isApproved(response.status)) {
         this.productSelectionService.clearSelections();
+        this.cartReservationService.clearState();
       }
       this.successMessage.set('PIX gerado! Use o QR Code ou copie o código.');
       this.startPolling(response.purchaseId);
@@ -122,6 +158,7 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
       if (this.isApproved(status.status)) {
         this.successMessage.set('Pagamento confirmado! Seu pedido está sendo processado.');
         this.productSelectionService.clearSelections();
+        this.cartReservationService.clearState();
         this.stopPolling();
       }
     } catch (error) {
@@ -223,6 +260,7 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
           if (this.isApproved(status.status)) {
             this.successMessage.set('Pagamento confirmado! Seu pedido está sendo processado.');
             this.productSelectionService.clearSelections();
+            this.cartReservationService.clearState();
             this.stopPolling();
           }
         },
