@@ -93,6 +93,81 @@
     </p>
     }
 
+    <!-- Active cart warning -->
+    @if (hasActiveCart()) {
+    <div
+      class="p-4 rounded-2xl bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/50">
+      <div class="flex items-start gap-3">
+        <div
+          class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+          <i class="pi pi-shopping-cart text-blue-500 text-lg"></i>
+        </div>
+        <div class="flex-1">
+          <h4 class="text-sm font-bold text-blue-900 dark:text-blue-100">Carrinho ativo</h4>
+          <p class="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
+            Você já possui um carrinho ativo para este evento. Finalize a compra ou cancele para selecionar novos
+            ingressos.
+          </p>
+          <button (click)="goToCart()"
+            class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500 text-white text-xs font-semibold hover:bg-blue-600 transition-colors">
+            <i class="pi pi-shopping-cart text-[10px]"></i>
+            Ir para o carrinho
+          </button>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Pending purchases warning -->
+    @if (pendingPurchases().length > 0) {
+    <div
+      class="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50">
+      <div class="flex items-start gap-3">
+        <div
+          class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+          <i class="pi pi-exclamation-circle text-amber-500 text-lg"></i>
+        </div>
+        <div class="flex-1">
+          <h4 class="text-sm font-bold text-amber-900 dark:text-amber-100">
+            {{ pendingPurchases().length === 1 ? 'Pagamento pendente' : 'Pagamentos pendentes' }}
+          </h4>
+          <p class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+            Você possui {{ pendingPurchases().length }}
+            {{ pendingPurchases().length === 1 ? 'compra aguardando pagamento' : 'compras aguardando pagamento' }}
+            para este evento.
+          </p>
+          <div class="mt-2 space-y-2">
+            @for (purchase of pendingPurchases(); track purchase.purchaseId) {
+            <div
+              class="flex items-center gap-2 p-2 rounded-lg bg-white/70 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30">
+              @if (purchase.paymentMethod === 'pix') {
+              <i class="pi pi-qrcode text-sm text-amber-600 dark:text-amber-400"></i>
+              } @else {
+              <i class="pi pi-credit-card text-sm text-amber-600 dark:text-amber-400"></i>
+              }
+              <span class="text-xs text-amber-800 dark:text-amber-200 flex-1">
+                R$ {{ purchase.totalAmount }} · {{ purchase.paymentMethod === 'pix' ? 'PIX' : 'Cartão' }}
+              </span>
+              @if (purchase.pixCopyAndPaste) {
+              <button (click)="copyPixCode(purchase.pixCopyAndPaste!)"
+                class="inline-flex items-center gap-1 px-2 py-1 rounded bg-amber-500 text-white text-[10px] font-semibold hover:bg-amber-600 transition-colors">
+                <i class="pi pi-copy text-[9px]"></i>
+                Copiar PIX
+              </button>
+              }
+            </div>
+            }
+          </div>
+          <button (click)="goToMyOrders()"
+            class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:text-amber-800 transition-colors">
+            <i class="pi pi-arrow-right text-[10px]"></i>
+            Ver meus pedidos
+          </button>
+        </div>
+      </div>
+    </div>
+    }
+
     <!-- Active Batch Info -->
     @if (event()?.activeBatch; as batch) {
     <div

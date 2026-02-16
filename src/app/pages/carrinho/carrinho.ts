@@ -1,4 +1,4 @@
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, OnInit, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -7,10 +7,11 @@ import { ProductSelectionService } from '../../services/product-selection.servic
 import { ProductSelection } from '../../models/product.model';
 import { CartItemComponent } from '../../components/cart-item/cart-item';
 import { AuthService } from '../../services/auth.service';
+import { UserPurchasesService, UserPurchase } from '../../services/user-purchases.service';
 
 @Component({
   selector: 'app-carrinho',
-  imports: [CommonModule, RouterLink, CurrencyPipe, CartItemComponent, FormsModule],
+  imports: [CommonModule, RouterLink, CurrencyPipe, DatePipe, CartItemComponent, FormsModule],
   templateUrl: './carrinho.html',
   styleUrl: './carrinho.scss'
 })
@@ -19,8 +20,10 @@ export class CarrinhoComponent implements OnInit, OnDestroy {
   private readonly cartReservationService = inject(CartReservationService);
   private readonly productSelectionService = inject(ProductSelectionService);
   private readonly authService = inject(AuthService);
+  private readonly purchasesService = inject(UserPurchasesService);
 
   reservation = this.cartReservationService.reservation;
+  pendingPurchasesForEvent = signal<UserPurchase[]>([]);
   remainingFormatted = this.cartReservationService.remainingFormatted;
   remainingSeconds = this.cartReservationService.remainingSeconds;
   isExpired = this.cartReservationService.isExpired;
@@ -52,18 +55,39 @@ export class CarrinhoComponent implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
-    // Load active cart if not already set
     if (!this.reservation()) {
       this.cartReservationService.loadActiveCart().then((cart) => {
         if (!cart) {
           this.router.navigate(['/ingressos']);
+        } else {
+          this.checkPendingPurchases(cart.eventId);
         }
       });
+    } else {
+      this.checkPendingPurchases(this.reservation()!.eventId);
     }
   }
 
+  private async checkPendingPurchases(eventId: number): Promise<void> {
+    if (!this.authService.isLoggedIn()) return;
+    try {
+      const pending = await this.purchasesService.loadPendingForEvent(eventId);
+      this.pendingPurchasesForEvent.set(pending);
+    } catch {
+      // non-critical
+    }
+  }
+
+  goToMyOrders(): void {
+    this.router.navigate(['/meus-pedidos']);
+  }
+
+  copyPixCode(code: string): void {
+    navigator.clipboard.writeText(code);
+  }
+
   ngOnDestroy(): void {
-    // Timer continues in the service (singleton)
+
   }
 
   hasTickets(): boolean {
@@ -109,9 +133,6 @@ export class CarrinhoComponent implements OnInit, OnDestroy {
     this.router.navigate(['/pagamento']);
   }
 
-  /**
-   * Get the urgency level for the timer styling.
-   */
   timerUrgency(): 'normal' | 'warning' | 'critical' {
     const secs = this.remainingSeconds();
     if (secs <= 60) return 'critical';
@@ -119,9 +140,6 @@ export class CarrinhoComponent implements OnInit, OnDestroy {
     return 'normal';
   }
 
-  /**
-   * Import user data to the first participant (index 0).
-   */
   importUserDataToParticipant1(): void {
     const user = this.authService.getUser();
     if (!user) return;
@@ -131,13 +149,11 @@ export class CarrinhoComponent implements OnInit, OnDestroy {
       email: user.email || '',
     };
 
-    // If user has CPF, set document type and number
     if (user.cpf) {
       participantData.documentType = 'CPF';
       participantData.documentNumber = user.cpf;
     }
 
-    // Update participant at index 0
     this.cartReservationService.updateParticipant(0, participantData);
   }
 
