@@ -37,3 +37,9 @@
     background: rgba(192, 132, 252, 0.1) !important;
   }
 }
+
+@media print {
+  :host {
+    display: none !important;
+  }
+}

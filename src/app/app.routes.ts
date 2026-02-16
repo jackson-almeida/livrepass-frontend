@@ -15,6 +15,14 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/auth/register/register').then(m => m.RegisterComponent)
       },
       {
+        path: 'forgot-password',
+        loadComponent: () => import('./pages/auth/forgot-password/forgot-password').then(m => m.ForgotPasswordComponent)
+      },
+      {
+        path: 'reset-password',
+        loadComponent: () => import('./pages/auth/reset-password/reset-password').then(m => m.ResetPasswordComponent)
+      },
+      {
         path: '',
         redirectTo: 'login',
         pathMatch: 'full'
@@ -41,6 +49,21 @@ export const routes: Routes = [
       {
         path: 'carrinho',
         loadComponent: () => import('./pages/carrinho/carrinho').then(m => m.CarrinhoComponent),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'meus-pedidos',
+        loadComponent: () => import('./pages/meus-pedidos/meus-pedidos').then(m => m.MeusPedidosComponent),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'confirmacao/:purchaseId',
+        loadComponent: () => import('./pages/confirmacao/confirmacao').then(m => m.ConfirmacaoComponent),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'ingressos-digitais/:purchaseId',
+        loadComponent: () => import('./pages/ingressos-digitais/ingressos-digitais').then(m => m.IngressosDigitaisComponent),
         canActivate: [authGuard]
       },
       {

@@ -1,4 +1,7 @@
 <div class="min-h-screen bg-light-bg dark:bg-dark-bg transition-colors duration-300">
+  <!-- Messages Component -->
+  <app-message />
+
   <!-- Top Header -->
   <app-navbar />
 
@@ -45,10 +48,19 @@
       </button>
 
       @if (isLoggedIn()) {
-      <button (click)="logout()" class="bottom-tab">
-        <i class="pi pi-user text-xl"></i>
+      <a routerLink="/meus-pedidos" routerLinkActive="active-tab" [routerLinkActiveOptions]="{exact: false}"
+        class="bottom-tab" (click)="onTabClick()">
+        <div class="relative">
+          <i class="pi pi-user text-xl"></i>
+          @if (pendingPurchasesCount() > 0) {
+          <span
+            class="absolute -top-1 -right-2 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">
+            {{ pendingPurchasesCount() }}
+          </span>
+          }
+        </div>
         <span class="text-[10px] font-semibold mt-0.5">Perfil</span>
-      </button>
+      </a>
       } @else {
       <a routerLink="/auth/login" class="bottom-tab" (click)="onTabClick()">
         <i class="pi pi-sign-in text-xl"></i>
