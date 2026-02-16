@@ -1,0 +1,57 @@
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes bounce-once {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    70% {
+        transform: scale(0.95);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+}
+
+.animate-bounce-once {
+    animation: bounce-once 0.6s ease-out;
+}
+
+// Esconder botões de ação quando imprimir
+@media print {
+    .print-hidden {
+        display: none !important;
+    }
+
+    // Make background colors visible in print
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    // Remove dark mode for print
+    :host {
+        color: #111 !important;
+        background: white !important;
+    }
+}

@@ -1,0 +1,45 @@
+.filter-chip {
+  @apply inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold
+    border border-light-border dark:border-dark-border
+    text-light-text-secondary dark:text-dark-text-secondary
+    bg-white dark:bg-dark-surface
+    hover:bg-light-hover dark:hover:bg-dark-hover
+    transition-all;
+
+  &.active-filter {
+    @apply bg-primary-600 text-white border-primary-600
+      dark:bg-primary-500 dark:border-primary-500;
+  }
+}
+
+.skeleton {
+  @apply bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
