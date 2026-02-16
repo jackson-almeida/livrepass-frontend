@@ -48,3 +48,20 @@
         background: #c084fc;
     }
 }
+
+@media print {
+
+    app-navbar,
+    nav[class*="md:hidden"] {
+        display: none !important;
+    }
+
+    main {
+        padding-bottom: 0 !important;
+    }
+
+    // Hide message component too
+    app-message {
+        display: none !important;
+    }
+}

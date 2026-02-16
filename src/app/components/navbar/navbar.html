@@ -43,6 +43,19 @@
                     <i class="pi pi-shopping-cart text-sm"></i>
                     Carrinho
                 </a>
+                @if (isLoggedIn()) {
+                <a routerLink="/meus-pedidos" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: false}"
+                    class="nav-link relative">
+                    <i class="pi pi-receipt text-sm"></i>
+                    Meus Pedidos
+                    @if (pendingCount() > 0) {
+                    <span
+                        class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">
+                        {{ pendingCount() }}
+                    </span>
+                    }
+                </a>
+                }
             </div>
 
             <!-- Right Actions -->
