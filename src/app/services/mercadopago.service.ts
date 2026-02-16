@@ -14,6 +14,32 @@ export interface CardFieldsMountConfig {
   securityCodeContainerId: string;
 }
 
+export interface PaymentMethodResult {
+  id: string;
+  name: string;
+  payment_type_id: string;
+  thumbnail: string;
+  secure_thumbnail: string;
+}
+
+export interface PayerCost {
+  installments: number;
+  installment_rate: number;
+  discount_rate: number;
+  min_allowed_amount: number;
+  max_allowed_amount: number;
+  recommended_message: string;
+  installment_amount: number;
+  total_amount: number;
+}
+
+export interface InstallmentResult {
+  payment_method_id: string;
+  payment_type_id: string;
+  issuer: { id: string; name: string };
+  payer_costs: PayerCost[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class MercadoPagoService {
   private readonly scriptUrl = 'https://sdk.mercadopago.com/js/v2';
@@ -24,9 +50,11 @@ export class MercadoPagoService {
   private expirationDateField?: any;
   private securityCodeField?: any;
 
-  constructor(@Inject(DOCUMENT) private document: Document) {}
+  constructor(@Inject(DOCUMENT) private document: Document) { }
 
-  async createCardToken(payload: CardTokenPayload): Promise<{ id: string; first_six_digits: string } & Record<string, unknown>> {
+  async createCardToken(
+    payload: CardTokenPayload,
+  ): Promise<{ id: string; first_six_digits: string } & Record<string, unknown>> {
     const fields = await this.getFieldsApi();
 
     if (fields?.createCardToken) {
@@ -50,14 +78,13 @@ export class MercadoPagoService {
       style: {
         input: {
           color: '#1f2937',
-          'font-size': '1rem',
-          'font-family': 'inherit',
+          'font-size': '0.9375rem',
+          'font-family': "'Inter', system-ui, -apple-system, sans-serif",
+          'font-weight': '400',
+          'line-height': '1.5',
         },
         'input::placeholder': {
           color: '#9ca3af',
-        },
-        label: {
-          color: '#6b7280',
         },
       },
     };
@@ -73,7 +100,7 @@ export class MercadoPagoService {
     });
 
     this.securityCodeField = fields.create('securityCode', {
-      placeholder: 'CVV',
+      placeholder: '123',
       ...baseStyle,
     });
 
@@ -82,6 +109,33 @@ export class MercadoPagoService {
       this.expirationDateField.mount(config.expirationDateContainerId),
       this.securityCodeField.mount(config.securityCodeContainerId),
     ]);
+  }
+
+  /**
+   * Registra um callback para quando o BIN do cartão muda.
+   */
+  onCardNumberBinChange(callback: (data: { bin: string | null }) => void): void {
+    if (this.cardNumberField) {
+      this.cardNumberField.on('binChange', callback);
+    }
+  }
+
+  /**
+   * Obtém os métodos de pagamento (marcas de cartão) baseado no BIN do cartão.
+   */
+  async getPaymentMethods(bin: string): Promise<{ results: PaymentMethodResult[] }> {
+    const mp = await this.getInstance();
+    return mp.getPaymentMethods({ bin });
+  }
+
+  async getInstallments(amount: string, bin: string): Promise<InstallmentResult[]> {
+    const mp = await this.getInstance();
+    return mp.getInstallments({ amount, bin });
+  }
+
+  async getIssuers(paymentMethodId: string, bin: string): Promise<any[]> {
+    const mp = await this.getInstance();
+    return mp.getIssuers({ paymentMethodId, bin });
   }
 
   unmountCardFields(): void {
@@ -144,12 +198,12 @@ export class MercadoPagoService {
         script.src = this.scriptUrl;
         script.async = true;
         script.onload = () => resolve();
-        script.onerror = () => reject(new Error('Não foi possível carregar o SDK do Mercado Pago.'));
+        script.onerror = () =>
+          reject(new Error('Não foi possível carregar o SDK do Mercado Pago.'));
         this.document.body.appendChild(script);
       });
     }
 
     return this.scriptPromise;
   }
-
 }

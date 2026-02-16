@@ -1,6 +1,6 @@
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { interval, startWith, switchMap, Subscription, firstValueFrom } from 'rxjs';
 import { InputTextModule } from 'primeng/inputtext';
@@ -17,7 +17,7 @@ import { CartReservationService } from '../../../services/cart-reservation.servi
 
 @Component({
   selector: 'app-pagamento-pix',
-  imports: [CommonModule, CurrencyPipe, ReactiveFormsModule, InputTextModule],
+  imports: [CommonModule, CurrencyPipe, ReactiveFormsModule, InputTextModule, RouterLink],
   templateUrl: './pagamento-pix.html',
   styleUrl: './pagamento-pix.scss',
 })
@@ -135,6 +135,8 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
       if (this.isApproved(response.status)) {
         this.productSelectionService.clearSelections();
         this.cartReservationService.clearState();
+        this.redirectToConfirmation(response.purchaseId);
+        return;
       }
       this.successMessage.set('PIX gerado! Use o QR Code ou copie o código.');
       this.startPolling(response.purchaseId);
@@ -156,10 +158,11 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
       const status = await firstValueFrom(this.paymentService.getPaymentStatus(pix.purchaseId));
       this.paymentStatus.set(status.status);
       if (this.isApproved(status.status)) {
-        this.successMessage.set('Pagamento confirmado! Seu pedido está sendo processado.');
+        this.successMessage.set('Pagamento confirmado! Redirecionando para o comprovante...');
         this.productSelectionService.clearSelections();
         this.cartReservationService.clearState();
         this.stopPolling();
+        this.redirectToConfirmation(pix.purchaseId);
       }
     } catch (error) {
       this.errorMessage.set('Não foi possível atualizar o status do pagamento.');
@@ -258,10 +261,14 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
         next: (status) => {
           this.paymentStatus.set(status.status);
           if (this.isApproved(status.status)) {
-            this.successMessage.set('Pagamento confirmado! Seu pedido está sendo processado.');
+            this.successMessage.set('Pagamento confirmado! Redirecionando para o comprovante...');
             this.productSelectionService.clearSelections();
             this.cartReservationService.clearState();
             this.stopPolling();
+            const pix = this.pixPayment();
+            if (pix) {
+              this.redirectToConfirmation(pix.purchaseId);
+            }
           }
         },
         error: () => this.errorMessage.set('Erro ao verificar o status do pagamento.'),
@@ -273,6 +280,12 @@ export class PagamentoPixComponent implements OnInit, OnDestroy {
       this.pollingSub.unsubscribe();
       this.pollingSub = undefined;
     }
+  }
+
+  private redirectToConfirmation(purchaseId: string): void {
+    setTimeout(() => {
+      this.router.navigate(['/confirmacao', purchaseId]);
+    }, 1500);
   }
 
   private isApproved(status: PaymentStatus): boolean {

@@ -10,7 +10,7 @@ import {
   NgZone,
   computed,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { interval, startWith, switchMap, Subscription, firstValueFrom } from 'rxjs';
 import { InputTextModule } from 'primeng/inputtext';
@@ -23,10 +23,22 @@ import {
   PaymentStatus,
   PaymentSummaryResponse,
 } from '../../../services/payment.service';
-import { MercadoPagoService } from '../../../services/mercadopago.service';
+import {
+  MercadoPagoService,
+  PayerCost,
+  PaymentMethodResult,
+} from '../../../services/mercadopago.service';
 import { ProductSelectionService } from '../../../services/product-selection.service';
 import { ProductPurchaseCustomer, ProductSaleReference } from '../../../models/product.model';
 import { CartReservationService, CartReservationItem } from '../../../services/cart-reservation.service';
+
+interface InstallmentOption {
+  label: string;
+  value: number;
+  installmentAmount: number;
+  totalAmount: number;
+  rate: number;
+}
 
 @Component({
   selector: 'app-pagamento-cartao',
@@ -36,6 +48,7 @@ import { CartReservationService, CartReservationItem } from '../../../services/c
     InputTextModule,
     SelectModule,
     ReactiveFormsModule,
+    RouterLink,
   ],
   templateUrl: './pagamento-cartao.html',
   styleUrl: './pagamento-cartao.scss',
@@ -65,18 +78,23 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
   remainingFormatted = this.cartReservationService.remainingFormatted;
   isExpired = this.cartReservationService.isExpired;
 
-  private pollingSub?: Subscription;
+  // Card brand auto-detection
+  detectedBrand = signal<PaymentMethodResult | null>(null);
+  detectedPaymentMethodId = signal<string | null>(null);
+  detectedBrandThumbnail = signal<string | null>(null);
+  detectedIssuerId = signal<string | null>(null);
 
-  bandeiras = [
-    { label: 'Visa', value: 'visa' },
-    { label: 'Mastercard', value: 'master' },
-    { label: 'Elo', value: 'elo' },
-    { label: 'Amex', value: 'amex' },
-  ];
+  // Dynamic installments
+  installmentsOptions = signal<InstallmentOption[]>([
+    { label: '1x à vista', value: 1, installmentAmount: 0, totalAmount: 0, rate: 0 },
+  ]);
+  loadingInstallments = signal(false);
+
+  private pollingSub?: Subscription;
+  private currentBin: string | null = null;
 
   cardForm = this.fb.group({
     cardholderName: ['', Validators.required],
-    paymentMethodId: ['visa', Validators.required],
     installments: [1, Validators.required],
   });
 
@@ -89,21 +107,23 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
     phoneNumber: [''],
   });
 
-  installmentsOptions = Array.from({ length: 12 }, (_, i) => ({
-    label: `${i + 1}x`,
-    value: i + 1,
-  }));
+  canSubmit = computed(() => {
+    return (
+      this.cardFieldsReady() &&
+      !!this.detectedPaymentMethodId() &&
+      !this.isProcessing() &&
+      !this.isExpired()
+    );
+  });
 
   ngOnInit() {
     const purchase = this.purchaseService.getPurchase();
     if (!purchase) {
-      // Try to build purchase data from reservation
       const reservation = this.cartReservationService.reservation();
       if (!reservation) {
         this.router.navigate(['/ingressos']);
         return;
       }
-      // Build a PurchaseData-like object from reservation
       const fakePurchase: PurchaseData = {
         eventId: String(reservation.eventId),
         eventName: reservation.eventName,
@@ -122,7 +142,6 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
         timestamp: Date.now(),
       };
       this.purchaseData.set(fakePurchase);
-      // Save to localStorage for compatibility
       this.purchaseService.savePurchase(fakePurchase);
       return;
     }
@@ -131,7 +150,9 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
   }
 
   ngAfterViewInit(): void {
-    this.ngZone.runOutsideAngular(() => queueMicrotask(() => this.initializeCardFields()));
+    this.ngZone.runOutsideAngular(() =>
+      queueMicrotask(() => this.initializeCardFields()),
+    );
   }
 
   ngOnDestroy(): void {
@@ -150,7 +171,17 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     if (this.isExpired()) {
-      this.errorMessage.set('Tempo de reserva expirado. Selecione os ingressos novamente.');
+      this.errorMessage.set(
+        'Tempo de reserva expirado. Selecione os ingressos novamente.',
+      );
+      return;
+    }
+
+    const paymentMethodId = this.detectedPaymentMethodId();
+    if (!paymentMethodId) {
+      this.errorMessage.set(
+        'Não foi possível identificar a bandeira do cartão. Verifique o número.',
+      );
       return;
     }
 
@@ -180,8 +211,9 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
           customer,
           {
             token: cardToken,
-            paymentMethodId: this.cardForm.value.paymentMethodId!,
+            paymentMethodId,
             installments: this.cardForm.value.installments!,
+            issuerId: this.detectedIssuerId() || undefined,
             holderName: cardholderName,
           },
           {
@@ -224,7 +256,7 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
       if (!this.isPending(status.status)) {
         this.stopPolling();
       }
-    } catch (error) {
+    } catch {
       this.errorMessage.set('Não foi possível verificar o status do pagamento.');
     }
   }
@@ -254,6 +286,75 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
   }
 
   // ─── Private helpers ──────────────────────────────────────────
+
+  private async handleBinChange(bin: string | null): Promise<void> {
+    if (!bin || bin.length < 6) {
+      this.detectedBrand.set(null);
+      this.detectedPaymentMethodId.set(null);
+      this.detectedBrandThumbnail.set(null);
+      this.detectedIssuerId.set(null);
+      this.installmentsOptions.set([
+        { label: '1x à vista', value: 1, installmentAmount: 0, totalAmount: 0, rate: 0 },
+      ]);
+      return;
+    }
+
+    if (bin === this.currentBin) return;
+    this.currentBin = bin;
+
+    try {
+      const methods = await this.mercadoPagoService.getPaymentMethods(bin);
+      if (methods?.results?.length) {
+        const method = methods.results[0];
+        this.detectedBrand.set(method);
+        this.detectedPaymentMethodId.set(method.id);
+        this.detectedBrandThumbnail.set(
+          method.secure_thumbnail || method.thumbnail,
+        );
+      }
+
+      // Buscar opções de parcelamento baseado no valor + BIN
+      const amount = this.totalToPay().toFixed(2);
+      if (parseFloat(amount) > 0) {
+        this.loadingInstallments.set(true);
+        const installments = await this.mercadoPagoService.getInstallments(
+          amount,
+          bin,
+        );
+
+        if (installments?.length) {
+          const plan = installments[0];
+
+          if (plan.issuer) {
+            this.detectedIssuerId.set(plan.issuer.id);
+          }
+
+          const options: InstallmentOption[] = plan.payer_costs.map(
+            (cost: PayerCost) => ({
+              label:
+                cost.recommended_message ||
+                `${cost.installments}x de R$ ${cost.installment_amount.toFixed(2)}`,
+              value: cost.installments,
+              installmentAmount: cost.installment_amount,
+              totalAmount: cost.total_amount,
+              rate: cost.installment_rate,
+            }),
+          );
+
+          this.installmentsOptions.set(options);
+
+          const currentValue = this.cardForm.value.installments;
+          if (!options.some((o) => o.value === currentValue)) {
+            this.cardForm.patchValue({ installments: 1 });
+          }
+        }
+        this.loadingInstallments.set(false);
+      }
+    } catch (error) {
+      console.warn('Erro ao detectar bandeira/parcelas:', error);
+      this.loadingInstallments.set(false);
+    }
+  }
 
   private buildCustomerPayload(): PaymentCustomerPayload {
     const value = this.customerForm.value;
@@ -340,12 +441,18 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
         ),
         securityCodeContainerId: this.ensureFieldElement('card-security-field'),
       });
-      this.cardFieldsReady.set(true);
+
+      // Listen for BIN changes to auto-detect card brand and installments
+      this.mercadoPagoService.onCardNumberBinChange((data) => {
+        this.ngZone.run(() => this.handleBinChange(data.bin));
+      });
+
+      this.ngZone.run(() => this.cardFieldsReady.set(true));
     } catch (error) {
       const message =
         (error as { message?: string })?.message ||
         'Não foi possível inicializar os campos do cartão.';
-      this.errorMessage.set(message);
+      this.ngZone.run(() => this.errorMessage.set(message));
     }
   }
 
@@ -385,11 +492,11 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
     return id;
   }
 
-  private isApproved(status: PaymentStatus): boolean {
+  isApproved(status: PaymentStatus): boolean {
     return status === 'approved' || status === 'authorized';
   }
 
-  private isPending(status: PaymentStatus): boolean {
+  isPending(status: PaymentStatus): boolean {
     return (
       status === 'pending' ||
       status === 'in_process' ||
@@ -415,10 +522,16 @@ export class PagamentoCartaoComponent implements OnInit, OnDestroy, AfterViewIni
     if (this.isApproved(status)) {
       this.errorMessage.set(null);
       this.successMessage.set(
-        'Pagamento aprovado! Seus ingressos serão liberados em instantes.',
+        'Pagamento aprovado! Redirecionando para o comprovante...',
       );
       this.productSelectionService.clearSelections();
       this.cartReservationService.clearState();
+      const result = this.paymentResult();
+      if (result?.purchaseId) {
+        setTimeout(() => {
+          this.router.navigate(['/confirmacao', result.purchaseId]);
+        }, 1500);
+      }
       return;
     }
 

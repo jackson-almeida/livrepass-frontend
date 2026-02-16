@@ -119,12 +119,10 @@ export class CartReservationService implements OnDestroy {
         });
     }
 
-    /**
-     * Load the current active cart from the server.
-     */
     loadActiveCart(): Promise<CartReservation | null> {
         return new Promise((resolve) => {
             this._loading.set(true);
+            const previousReservation = this._reservation();
 
             this.http
                 .get<CartReservation | { message: string }>(`${this.apiUrl}/cart`, {
@@ -134,11 +132,14 @@ export class CartReservationService implements OnDestroy {
                     next: (res) => {
                         this._loading.set(false);
                         if ('id' in res) {
-                            this._reservation.set(res as CartReservation);
-                            this._remainingSeconds.set((res as CartReservation).remainingSeconds);
-                            this.initializeParticipants(res as CartReservation);
+                            const cart = res as CartReservation;
+                            this._reservation.set(cart);
+                            this._remainingSeconds.set(cart.remainingSeconds);
+                            if (!previousReservation || previousReservation.id !== cart.id) {
+                                this.initializeParticipants(cart);
+                            }
                             this.startTimer();
-                            resolve(res as CartReservation);
+                            resolve(cart);
                         } else {
                             this._reservation.set(null);
                             resolve(null);
@@ -153,9 +154,6 @@ export class CartReservationService implements OnDestroy {
         });
     }
 
-    /**
-     * Cancel the current cart reservation.
-     */
     cancelReservation(): Promise<void> {
         return new Promise((resolve) => {
             this.stopTimer();
@@ -176,9 +174,6 @@ export class CartReservationService implements OnDestroy {
         });
     }
 
-    /**
-     * Update a participant's data.
-     */
     updateParticipant(index: number, data: Partial<TicketParticipant>): void {
         this._participants.update((list) => {
             const updated = [...list];
@@ -189,16 +184,10 @@ export class CartReservationService implements OnDestroy {
         });
     }
 
-    /**
-     * Get participants for payment submission.
-     */
     getParticipants(): TicketParticipant[] {
         return this._participants();
     }
 
-    /**
-     * Check if all participants have been filled.
-     */
     allParticipantsFilled(): boolean {
         return this._participants().every(
             (p) =>
