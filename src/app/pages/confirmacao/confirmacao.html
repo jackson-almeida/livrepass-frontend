@@ -1,0 +1,266 @@
+<div class="space-y-5 animate-fade-in max-w-2xl mx-auto">
+
+    <!-- Loading -->
+    @if (loading()) {
+    <div class="flex flex-col items-center justify-center py-16 space-y-4">
+        <div class="w-16 h-16 rounded-full border-4 border-primary-200 border-t-primary-600 animate-spin"></div>
+        <p class="text-sm text-light-text-secondary dark:text-dark-text-secondary">Carregando comprovante...</p>
+    </div>
+    }
+
+    <!-- Error -->
+    @if (error()) {
+    <div class="rounded-2xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/50 p-6 text-center">
+        <div class="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+            <i class="pi pi-exclamation-triangle text-2xl text-red-500"></i>
+        </div>
+        <p class="text-red-700 dark:text-red-300 font-semibold">{{ error() }}</p>
+        <a routerLink="/meus-pedidos"
+            class="mt-4 inline-flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 font-semibold hover:underline">
+            <i class="pi pi-arrow-left text-xs"></i>
+            Ir para meus pedidos
+        </a>
+    </div>
+    }
+
+    @if (purchase(); as p) {
+    <!-- Status Hero -->
+    <div class="rounded-2xl overflow-hidden" id="receipt-section">
+        @if (isApproved()) {
+        <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 p-6 sm:p-8 text-center text-white">
+            <div
+                class="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 animate-bounce-once">
+                <i class="pi pi-check text-4xl"></i>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold">Pagamento aprovado!</h1>
+            <p class="text-white/80 mt-2 text-sm">Seus ingressos estão confirmados</p>
+        </div>
+        } @else if (isPending()) {
+        <div class="bg-gradient-to-r from-amber-500 to-amber-600 p-6 sm:p-8 text-center text-white">
+            <div
+                class="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4">
+                <i class="pi pi-clock text-4xl"></i>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold">Aguardando pagamento</h1>
+            <p class="text-white/80 mt-2 text-sm">Estamos aguardando a confirmação do seu pagamento</p>
+        </div>
+        } @else if (isRejected()) {
+        <div class="bg-gradient-to-r from-red-500 to-red-600 p-6 sm:p-8 text-center text-white">
+            <div
+                class="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4">
+                <i class="pi pi-times text-4xl"></i>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold">Pagamento não aprovado</h1>
+            <p class="text-white/80 mt-2 text-sm">{{ statusLabel() }}</p>
+        </div>
+        }
+
+        <!-- Purchase Summary Card -->
+        <div
+            class="bg-white dark:bg-dark-surface border border-light-border dark:border-dark-border border-t-0 p-5 sm:p-6 space-y-5">
+
+            <!-- Event Info -->
+            <div class="flex items-start gap-4">
+                <div
+                    class="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center flex-shrink-0">
+                    <i class="pi pi-ticket text-xl text-primary-600 dark:text-primary-400"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-lg font-bold text-light-text-primary dark:text-dark-text-primary">{{ p.eventName ||
+                        'Evento' }}</h2>
+                    <div
+                        class="flex items-center gap-3 mt-1 text-xs text-light-text-tertiary dark:text-dark-text-tertiary">
+                        <span class="flex items-center gap-1">
+                            <i class="pi pi-ticket text-[10px]"></i>
+                            {{ totalTickets() }} ingresso(s)
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <i class="pi pi-calendar text-[10px]"></i>
+                            {{ p.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="border-t border-dashed border-light-border dark:border-dark-border"></div>
+
+            <!-- Items -->
+            <div>
+                <h3
+                    class="text-xs font-bold text-light-text-tertiary dark:text-dark-text-tertiary uppercase tracking-wider mb-3">
+                    Ingressos</h3>
+                <div class="space-y-2">
+                    @for (item of p.items; track $index) {
+                    <div class="flex items-center justify-between py-2">
+                        <div>
+                            <p class="text-sm font-semibold text-light-text-primary dark:text-dark-text-primary">{{
+                                item.categoryType || 'Ingresso' }}</p>
+                            <p class="text-xs text-light-text-tertiary dark:text-dark-text-tertiary">{{ item.quantity
+                                }}x {{ item.unitPrice | currency:'BRL':'symbol-narrow':'1.2-2' }}</p>
+                        </div>
+                        <p class="text-sm font-bold text-primary-600 dark:text-primary-400">{{ item.totalPrice |
+                            currency:'BRL':'symbol-narrow':'1.2-2' }}</p>
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="border-t border-dashed border-light-border dark:border-dark-border"></div>
+
+            <!-- Total -->
+            <div class="flex items-center justify-between">
+                <span class="text-sm font-bold text-light-text-primary dark:text-dark-text-primary">Total</span>
+                <span class="text-xl font-extrabold text-primary-600 dark:text-primary-400">
+                    R$ {{ p.totalAmount }}
+                </span>
+            </div>
+
+            <!-- Divider -->
+            <div class="border-t border-dashed border-light-border dark:border-dark-border"></div>
+
+            <!-- Payment Info -->
+            <div>
+                <h3
+                    class="text-xs font-bold text-light-text-tertiary dark:text-dark-text-tertiary uppercase tracking-wider mb-3">
+                    Dados do pagamento</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-3 rounded-xl bg-light-hover/50 dark:bg-dark-surface-elevated/50">
+                        <p
+                            class="text-[10px] uppercase tracking-wider font-semibold text-light-text-tertiary dark:text-dark-text-tertiary mb-1">
+                            Método</p>
+                        <p
+                            class="text-sm font-semibold text-light-text-primary dark:text-dark-text-primary flex items-center gap-1.5">
+                            @if (p.paymentMethod === 'pix') {
+                            <i class="pi pi-qrcode text-emerald-500 text-xs"></i>
+                            } @else {
+                            <i class="pi pi-credit-card text-blue-500 text-xs"></i>
+                            }
+                            {{ paymentMethodLabel() }}
+                        </p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-light-hover/50 dark:bg-dark-surface-elevated/50">
+                        <p
+                            class="text-[10px] uppercase tracking-wider font-semibold text-light-text-tertiary dark:text-dark-text-tertiary mb-1">
+                            Status</p>
+                        <span class="text-xs font-bold px-2 py-1 rounded-full inline-block" [ngClass]="statusColor()">
+                            {{ statusLabel() }}
+                        </span>
+                    </div>
+                    @if (p.lastFourDigits) {
+                    <div class="p-3 rounded-xl bg-light-hover/50 dark:bg-dark-surface-elevated/50">
+                        <p
+                            class="text-[10px] uppercase tracking-wider font-semibold text-light-text-tertiary dark:text-dark-text-tertiary mb-1">
+                            Cartão</p>
+                        <p class="text-sm font-semibold text-light-text-primary dark:text-dark-text-primary">
+                            •••• {{ p.lastFourDigits }}
+                        </p>
+                    </div>
+                    }
+                    @if (p.installments && p.installments > 0) {
+                    <div class="p-3 rounded-xl bg-light-hover/50 dark:bg-dark-surface-elevated/50">
+                        <p
+                            class="text-[10px] uppercase tracking-wider font-semibold text-light-text-tertiary dark:text-dark-text-tertiary mb-1">
+                            Parcelas</p>
+                        <p class="text-sm font-semibold text-light-text-primary dark:text-dark-text-primary">
+                            {{ p.installments }}x
+                        </p>
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Participants -->
+            @if (p.participants?.length) {
+            <div class="border-t border-dashed border-light-border dark:border-dark-border"></div>
+            <div>
+                <h3
+                    class="text-xs font-bold text-light-text-tertiary dark:text-dark-text-tertiary uppercase tracking-wider mb-3">
+                    Participantes</h3>
+                <div class="space-y-3">
+                    @for (participant of p.participants; track $index) {
+                    <div
+                        class="p-3 rounded-xl bg-light-hover/50 dark:bg-dark-surface-elevated/50 flex items-start gap-3">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                            <span class="text-xs font-bold text-primary-600 dark:text-primary-400">{{ $index + 1
+                                }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-light-text-primary dark:text-dark-text-primary">{{
+                                participant.name }}</p>
+                            <p class="text-xs text-light-text-tertiary dark:text-dark-text-tertiary">{{
+                                participant.email }}</p>
+                            <p class="text-xs text-light-text-tertiary dark:text-dark-text-tertiary">
+                                {{ participant.documentType }}: {{ participant.documentNumber }}
+                            </p>
+                            @if (participant.categoryType) {
+                            <span
+                                class="mt-1 inline-block text-[10px] px-2 py-0.5 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-semibold">
+                                {{ participant.categoryType }}
+                            </span>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- Purchase ID -->
+            <div class="border-t border-dashed border-light-border dark:border-dark-border"></div>
+            <div class="text-center">
+                <p
+                    class="text-[10px] uppercase tracking-wider font-semibold text-light-text-tertiary dark:text-dark-text-tertiary mb-1">
+                    ID da compra
+                </p>
+                <p class="text-xs font-mono text-light-text-secondary dark:text-dark-text-secondary">
+                    {{ p.purchaseId }}
+                </p>
+                @if (p.mercadoPagoPaymentId) {
+                <p class="text-[10px] text-light-text-tertiary dark:text-dark-text-tertiary mt-1">
+                    Mercado Pago: {{ p.mercadoPagoPaymentId }}
+                </p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions (hidden on print) -->
+    <div class="flex flex-col gap-3 print-hidden">
+        @if (isPending()) {
+        <button (click)="refreshStatus()"
+            class="w-full py-3.5 rounded-xl bg-amber-500 text-white font-bold text-sm hover:bg-amber-600 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+            <i class="pi pi-refresh"></i>
+            Atualizar status do pagamento
+        </button>
+        }
+
+        @if (isApproved()) {
+        <a [routerLink]="['/ingressos-digitais', purchase()!.purchaseId]"
+            class="w-full py-3.5 rounded-xl bg-emerald-500 text-white font-bold text-sm hover:bg-emerald-600 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+            <i class="pi pi-ticket"></i>
+            Ver meus ingressos
+        </a>
+        }
+
+        <button (click)="printReceipt()"
+            class="w-full py-3.5 rounded-xl bg-primary-600 text-white font-bold text-sm hover:bg-primary-700 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+            <i class="pi pi-download"></i>
+            Baixar comprovante
+        </button>
+
+        <a routerLink="/meus-pedidos"
+            class="w-full py-3.5 rounded-xl border border-light-border dark:border-dark-border text-light-text-secondary dark:text-dark-text-secondary font-semibold text-sm text-center hover:bg-light-hover dark:hover:bg-dark-hover transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+            <i class="pi pi-list"></i>
+            Ver meus pedidos
+        </a>
+
+        <a routerLink="/ingressos"
+            class="w-full py-3 text-center text-sm text-primary-600 dark:text-primary-400 font-semibold hover:underline">
+            Voltar para eventos
+        </a>
+    </div>
+    }
+</div>
