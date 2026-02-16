@@ -5,6 +5,8 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { CartReservationService } from '../../services/cart-reservation.service';
 import { WaitingRoomCardComponent } from '../../components/waiting-room-card/waiting-room-card';
 import { QueueAccessStore } from '../../services/queue-access.store';
+import { UserPurchasesService, UserPurchase } from '../../services/user-purchases.service';
+import { AuthService } from '../../services/auth.service';
 
 interface BatchCategory {
   id: number;
@@ -60,11 +62,15 @@ export class CompraComponent implements OnInit {
   private router = inject(Router);
   private cartReservationService = inject(CartReservationService);
   private queueAccessStore = inject(QueueAccessStore);
+  private purchasesService = inject(UserPurchasesService);
+  private authService = inject(AuthService);
 
   event = signal<EventDetail | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
   reserving = signal(false);
+  pendingPurchases = signal<UserPurchase[]>([]);
+  hasActiveCart = signal(false);
 
   categorySelections = signal<Record<number, number>>({});
   queueState = this.queueAccessStore.state;
@@ -80,10 +86,39 @@ export class CompraComponent implements OnInit {
     this.eventId = this.route.snapshot.paramMap.get('id');
     if (this.eventId) {
       this.loadEventDetails();
+      this.checkExistingPurchasesAndCart();
     } else {
       this.error.set('ID do evento não encontrado');
       this.loading.set(false);
     }
+  }
+
+  private async checkExistingPurchasesAndCart(): Promise<void> {
+    if (!this.eventId || !this.authService.isLoggedIn()) return;
+
+    try {
+      const pending = await this.purchasesService.loadPendingForEvent(Number(this.eventId));
+      this.pendingPurchases.set(pending);
+    } catch {
+      // Não poderia fazer dessa forma o try catch, buuuut.. kkk
+    }
+
+    const reservation = this.cartReservationService.reservation();
+    if (reservation && reservation.eventId === Number(this.eventId)) {
+      this.hasActiveCart.set(true);
+    }
+  }
+
+  goToCart(): void {
+    this.router.navigate(['/carrinho']);
+  }
+
+  goToMyOrders(): void {
+    this.router.navigate(['/meus-pedidos']);
+  }
+
+  copyPixCode(code: string): void {
+    navigator.clipboard.writeText(code);
   }
 
   loadEventDetails() {
@@ -247,7 +282,6 @@ export class CompraComponent implements OnInit {
         items,
       });
 
-      // Redirect to cart page with timer and participant form
       this.router.navigate(['/carrinho']);
     } catch (err: any) {
       this.error.set(typeof err === 'string' ? err : 'Erro ao reservar ingressos. Tente novamente.');
