@@ -101,6 +101,35 @@ interface CardPaymentOptions {
   productSales?: ProductSaleReference[];
 }
 
+export interface Ticket {
+  ticketId: number;
+  purchaseId: string;
+  participantName: string;
+  participantEmail: string;
+  documentType: string;
+  documentNumber: string;
+  categoryType?: string;
+  categoryId: number;
+  eventName: string;
+  eventId: number;
+  eventLocation: string;
+  eventStartDate: string;
+  eventEndDate: string;
+  qrCode: string;
+  qrCodeData: string;
+}
+
+export interface TicketsResponse {
+  purchaseId: string;
+  eventName: string;
+  eventId: number;
+  eventLocation: string;
+  eventStartDate: string;
+  eventEndDate: string;
+  tickets: Ticket[];
+  purchaseDate: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
   private http = inject(HttpClient);
@@ -183,6 +212,29 @@ export class PaymentService {
 
   getPaymentStatus(purchaseId: string): Observable<PaymentSummaryResponse> {
     return this.http.get<PaymentSummaryResponse>(`${this.baseUrl}/payments/${purchaseId}`);
+  }
+
+  getTickets(purchaseId: string): Observable<TicketsResponse> {
+    return this.http.get<TicketsResponse>(
+      `${this.baseUrl}/payments/${purchaseId}/tickets`,
+      { headers: this.getAuthHeaders() },
+    );
+  }
+
+  getGoogleWalletJWT(
+    purchaseId: string,
+    ticketId: number,
+  ): Observable<{ jwt: string }> {
+    return this.http.get<{ jwt: string }>(
+      `${this.baseUrl}/payments/${purchaseId}/tickets/${ticketId}/google-wallet`,
+      { headers: this.getAuthHeaders() },
+    );
+  }
+
+  checkGoogleWalletStatus(): Observable<{ configured: boolean }> {
+    return this.http.get<{ configured: boolean }>(
+      `${this.baseUrl}/payments/google-wallet/status`,
+    );
   }
 
   private buildItemsFromPurchase(purchase: PurchaseData): PaymentItemPayload[] {
